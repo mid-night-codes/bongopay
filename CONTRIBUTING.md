@@ -76,6 +76,10 @@ Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `perf`, `build
 `!` (e.g. `feat!:`) or a `BREAKING CHANGE:` footer for anything breaking a published contract —
 this should be rare and should already be backed by an RFC.
 
+This is enforced in CI, not just documented here — see
+[docs/development/ci.md](docs/development/ci.md) for the `commitlint` check that runs on every
+pull request.
+
 ## Keep Pull Requests Small
 
 Prefer several small PRs over one large one. Explicitly avoid:

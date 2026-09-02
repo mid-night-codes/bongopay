@@ -40,6 +40,14 @@ All notable changes to BongoPay are documented in this file. The format follows
   claim is now accurate for every directory the README lists.
 - Founding Core Maintainer entry in `MAINTAINERS.md` and `.github/CODEOWNERS`, replacing the
   `@TBD-core-maintainer` placeholder.
+- Maintainer-approval gate in `.github/workflows/ci.yml`: PRs from non-contributors (anyone
+  without prior repo access or a merged PR) pause on the `external-contribution-review`
+  environment's required reviewer before `make validate`/`lint`/`test`/`docs` execute any code
+  from the PR branch.
+- `.github/workflows/commitlint.yml` and `.commitlintrc.json`, enforcing the Conventional
+  Commits format documented in `CONTRIBUTING.md` on every pull request's commits — deliberately
+  not behind the approval gate above, since it only parses commit text against a static JSON
+  config.
 
 This closes Phase 0 ("Foundation") per [ROADMAP.md](ROADMAP.md): every `make` target
 (`setup`, `validate`, `lint`, `test`, `test-conformance`, `check-contracts`, `docs`, `generate`,

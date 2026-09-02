@@ -20,6 +20,16 @@ make docs      # internal markdown link resolution
 Per [AGENTS.md §5](../../AGENTS.md#5-commands-you-should-avoid), none of these may be bypassed
 (`--no-verify`, skipping `make validate`) to force a PR through.
 
+Separately, [.github/workflows/commitlint.yml](../../.github/workflows/commitlint.yml) validates
+every commit in a pull request against the
+[Conventional Commits](../../CONTRIBUTING.md#commit-messages-conventional-commits) format via
+[`commitlint`](https://commitlint.js.org/), configured in
+[.commitlintrc.json](../../.commitlintrc.json) (which just extends
+`@commitlint/config-conventional` — the same `feat`/`fix`/`docs`/`test`/`refactor`/`chore`/
+`perf`/`build`/`ci` types [CONTRIBUTING.md](../../CONTRIBUTING.md) already documents, so there is
+nothing project-specific to keep in sync between the two). Unlike the `validate` job below, this
+one is **not** gated by maintainer approval — see why in the next section.
+
 ## Maintainer Approval for Non-Contributor Pull Requests
 
 A pull request's `authorize` job checks the author's GitHub
@@ -42,6 +52,12 @@ process; it only gates whether CI *executes* before a human has looked at the di
 The `external-contribution-review` environment's reviewer list is managed in the repository's
 Settings → Environments, independent of this workflow file — updating who may approve does not
 require a workflow change.
+
+`commitlint.yml` is deliberately excluded from this gate: it only parses commit message text
+against a static JSON config (`.commitlintrc.json`, not executable), so there is no code-execution
+surface for a malicious PR to exploit the way there is with `scripts/*.sh` running under
+`validate`. Every contributor — including a first-time one — gets that feedback immediately,
+before a maintainer even looks at the PR.
 
 ## Dependency and Supply-Chain Scanning
 
