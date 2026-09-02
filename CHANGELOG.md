@@ -48,10 +48,13 @@ All notable changes to BongoPay are documented in this file. The format follows
   Commits format documented in `CONTRIBUTING.md` on every pull request's commits — deliberately
   not behind the approval gate above, since it only parses commit text against a static JSON
   config.
-- `.gitmessage` commit template and `.claude/skills/feature-branch/SKILL.md`, formalizing (and,
-  for AI agents, giving exact commands for) the required workflow: branch from the current tip
-  of `main` for every task, commit in fine-grained task-specific steps, then push the branch and
-  open a PR — never commit straight to `main`.
+- `.gitmessage` commit template and a "Branching and Commit Workflow" section in
+  `.github/CONTRIBUTING_AGENT.md`, formalizing (and, for AI agents, giving exact commands for)
+  the required workflow: branch from the current tip of `main` for every task, commit in
+  fine-grained task-specific steps, then push the branch and open a PR — never commit straight
+  to `main`. Deliberately placed in `.github/`, not a tool-specific `.claude/skills/` directory,
+  to stay consistent with `AGENTS.md`'s tool-agnostic framing (Claude, GPT, Copilot Workspace,
+  or any other agent).
 
 ### Fixed
 
