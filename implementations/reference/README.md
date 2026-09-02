@@ -5,9 +5,6 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
 
 ## Status
 
-**Blocked — Phase 1.** Nothing is implemented here yet. Per
-[implementations/README.md](../README.md), this is intentional: the reference implementation's
-language is an open `TODO(ADR)` (see
-[ARCHITECTURE.md §14](../../ARCHITECTURE.md#14-what-this-document-does-not-decide)), and writing
-code here before that ADR exists would either presuppose the answer or need to be redone once
-it's decided.
+**Starting — Phase 1.** Written in **Go**, per
+[ADR 0002](../../adr/0002-reference-implementation-language-go.md). No code exists yet — this
+README will be replaced with real module/build/run instructions as the implementation starts.

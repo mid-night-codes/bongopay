@@ -6,9 +6,12 @@ rationale rather than living only in a PR discussion or a maintainer's memory.
 
 ## Status
 
-**Draft / Phase 0.** No ADRs have been recorded yet; the several `TODO(ADR): ...` markers across
-[ARCHITECTURE.md](../ARCHITECTURE.md), [specs/](../specs/README.md), and this repository's other
-docs are exactly the backlog of decisions this directory expects to eventually hold.
+**Active.** Two ADRs recorded so far —
+[0001](0001-record-architecture-decisions.md) (this process itself) and
+[0002](0002-reference-implementation-language-go.md) (reference implementation language). The
+remaining `TODO(ADR): ...` markers across [ARCHITECTURE.md](../ARCHITECTURE.md),
+[specs/](../specs/README.md), and this repository's other docs are the backlog of decisions
+this directory expects to keep accumulating.
 
 ## When an ADR Is Required
 
@@ -20,8 +23,8 @@ requiring the RFC and say so explicitly rather than deciding silently.
 ## Process
 
 1. Copy [0000-template.md](0000-template.md) to `NNNN-short-title.md`, using the next sequential
-   number (check existing files here to find it — there are none yet, so the first ADR is
-   `0001-*`).
+   number (check existing files here to find it — the next one after
+   [0002](0002-reference-implementation-language-go.md) is `0003-*`).
 2. Fill in context, decision, and consequences. Leave open sub-decisions as
    `TODO(ADR): ...` / `TODO(RFC): ...` rather than guessing.
 3. Open a PR. Per [GOVERNANCE.md](../GOVERNANCE.md), an ADR may be approved by a Maintainer for
