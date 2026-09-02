@@ -53,6 +53,20 @@ All notable changes to BongoPay are documented in this file. The format follows
   of `main` for every task, commit in fine-grained task-specific steps, then push the branch and
   open a PR — never commit straight to `main`.
 
+### Fixed
+
+- The `ci.yml` trust check now keys on fork status and merged-PR history instead of GitHub's
+  `author_association`, which returned `NONE` for an actual repository member with private org
+  membership visibility — this was caught dogfooding the new branch/PR workflow on
+  [PR #4](https://github.com/mid-night-codes/bongopay/pull/4).
+- Added the READMEs for `contracts/json-schema/{payments,errors,events}/`,
+  `implementations/reference/`, and `docs/{concepts,contributing,maintainers}/` — these
+  directories existed only on local disk and were never actually committed (git does not track
+  empty directories), so a fresh clone was silently missing them and every link pointing at
+  them, undetected by `make docs` run locally against the pre-existing local tree. Also caught
+  via PR #4's CI run, not local validation — a reminder that "passes locally" and "passes on a
+  fresh checkout" aren't always the same claim.
+
 This closes Phase 0 ("Foundation") per [ROADMAP.md](ROADMAP.md): every `make` target
 (`setup`, `validate`, `lint`, `test`, `test-conformance`, `check-contracts`, `docs`, `generate`,
 `clean`) passes, and every directory referenced from the root `README.md` and `AGENTS.md` has a
