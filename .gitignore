@@ -8,3 +8,7 @@ node_modules/
 # Editor
 .vscode/
 .idea/
+
+# Tool-specific agent config/state — instructions for AI agents live in .github/ and AGENTS.md
+# instead, per AGENTS.md's tool-agnostic framing (this repo isn't Claude-Code-specific).
+.claude/
