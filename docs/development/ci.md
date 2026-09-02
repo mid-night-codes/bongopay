@@ -32,21 +32,23 @@ one is **not** gated by maintainer approval — see why in the next section.
 
 ## Maintainer Approval for Non-Contributor Pull Requests
 
-A pull request's `authorize` job checks the author's GitHub
-[`author_association`](https://docs.github.com/en/graphql/reference/enums#commentauthorassociation)
-with this repository, fetched live via `gh api repos/<repo>/pulls/<number>` rather than read
-from the triggering webhook's event payload — the payload's `author_association` field was
-observed returning `NONE` for an actual repository `MEMBER` (likely a caching lag for a
-just-added org member), which would have wrongly gated a trusted maintainer's PR. A live API
-call at job-run time reflects current reality instead of a stale snapshot.
+A pull request's `authorize` job determines trust from two robust, privacy-independent signals
+rather than GitHub's `author_association` field — that field was observed returning `NONE` for
+an actual repository `MEMBER` whose organization membership is private, which would have
+wrongly gated a trusted maintainer's own PR:
 
-- **`OWNER`, `MEMBER`, `COLLABORATOR`, or `CONTRIBUTOR`** (i.e. anyone with repo access, or
-  anyone who has landed a merged PR here before) — CI runs immediately, same as a push to `main`.
-- **Anyone else** (`FIRST_TIME_CONTRIBUTOR`, `FIRST_TIMER`, `NONE`, `MANNEQUIN`) — the
-  `await-maintainer-approval` job pauses in "Waiting" state, gated by the
-  `external-contribution-review` GitHub Environment's required-reviewer protection rule. A
-  maintainer must click **Review deployments → Approve** in the Actions tab before the
-  `validate` job (and therefore any of the `make` targets above) runs at all.
+- **Not a fork** (`head.repo` is this repo, not a fork) — the author already needed push access
+  to create that branch here in the first place, so trust is implied structurally. This covers
+  `OWNER`/`MEMBER`/`COLLABORATOR` without depending on org-membership visibility at all.
+- **A fork PR, but the author already has a merged PR in this repo** — checked live via the
+  search API (`is:merged author:<login>`), mirroring GitHub's own `CONTRIBUTOR` vs.
+  `FIRST_TIME_CONTRIBUTOR` distinction using public, unambiguous history instead of the
+  association field.
+- **Anyone else** (a fork PR with no prior merged PR here) — the `await-maintainer-approval` job
+  pauses in "Waiting" state, gated by the `external-contribution-review` GitHub Environment's
+  required-reviewer protection rule. A maintainer must click **Review deployments → Approve** in
+  the Actions tab before the `validate` job (and therefore any of the `make` targets above) runs
+  at all.
 
 This exists because a PR's workflow run executes arbitrary code from that PR's branch — running
 it unattended for a first-time, unvetted contributor is a real supply-chain exposure, not just a
