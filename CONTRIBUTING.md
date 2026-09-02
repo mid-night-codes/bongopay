@@ -41,8 +41,8 @@ Merge
 3. **Fork the repository** (or branch directly, for maintainers) and create a branch — always
    cut from the current tip of `main`, never from a stale copy or on top of another feature
    branch. AI agents: see
-   [.claude/skills/feature-branch/SKILL.md](.claude/skills/feature-branch/SKILL.md) for the
-   exact commands.
+   [.github/CONTRIBUTING_AGENT.md](.github/CONTRIBUTING_AGENT.md#branching-and-commit-workflow)
+   for the exact commands.
 4. **Implement the smallest reasonable change.** See "Keep Pull Requests Small" below.
 5. **Run validation locally**: `make validate`, `make lint`, `make test` (and
    `make test-conformance` if you touched a spec, contract, or adapter).

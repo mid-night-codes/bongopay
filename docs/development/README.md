@@ -41,8 +41,8 @@ All of the above are safe to run repeatedly and never mutate source files — se
 
 1. Branch from the current tip of `main` — never commit directly to `main`. See
    [CONTRIBUTING.md](../../CONTRIBUTING.md#branch-naming) for naming, or
-   [.claude/skills/feature-branch/SKILL.md](../../.claude/skills/feature-branch/SKILL.md) for
-   the exact commands if you're an AI agent.
+   [.github/CONTRIBUTING_AGENT.md](../../.github/CONTRIBUTING_AGENT.md#branching-and-commit-workflow)
+   for the exact commands if you're an AI agent.
 2. Read [AGENTS.md](../../AGENTS.md) §1 ("Read Before You Write") for the order to read things
    in before changing anything — this applies to human contributors too, not just AI agents.
 3. Make the smallest change that satisfies the issue/request (see
