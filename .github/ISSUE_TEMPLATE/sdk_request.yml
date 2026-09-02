@@ -1,0 +1,32 @@
+name: SDK request
+description: Request or propose a client SDK for a specific language/ecosystem.
+title: "feat(sdk): "
+labels: ["sdk"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SDKs are a Phase 2 ("Developer Tooling") concern per ROADMAP.md, generated from
+        contracts/ wherever practical. See sdks/README.md and ARCHITECTURE.md §7 for the SDK
+        boundary (idiomatic, thin, no business logic).
+  - type: input
+    id: language
+    attributes:
+      label: Language / ecosystem
+      description: e.g. TypeScript (npm), Python (PyPI), Go
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this language/ecosystem?
+      description: Who would use it, and is there an existing consumer application driving the request?
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Confirm you've read the SDK boundary
+      options:
+        - label: This request does not ask for provider-specific behavior or business logic inside the SDK (that belongs in adapters/ or the consuming application)
+          required: true

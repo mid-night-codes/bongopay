@@ -1,0 +1,41 @@
+name: Bug report
+description: Something in specs/, contracts/, docs/, or tooling doesn't behave as documented.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        BongoPay does not process real payments yet (see ROADMAP.md) — this template is for
+        bugs in the repository itself (specs, contracts, docs, scripts), not production
+        payment incidents. See SUPPORT.md if you're unsure this is the right template.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you observe instead?
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where does this live?
+      description: File(s)/directory affected — e.g. specs/payments/payment-contract.md, scripts/validate-specs.sh
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands run (e.g. `make validate`) and their output, if applicable.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: This is not a security vulnerability (see SECURITY.md if it is — do not file it here)
+          required: true
+        - label: I searched existing issues and this isn't a duplicate
+          required: true

@@ -1,0 +1,21 @@
+# CODEOWNERS — operational source of truth for review requirements.
+#
+# See GOVERNANCE.md for the roles this enforces and MAINTAINERS.md for the human-readable
+# roster. Uses the founding Core Maintainer's email (GitHub resolves an email to a handle only
+# if it's verified on that account) — replace with a @handle once one is confirmed, and add
+# entries here as the Maintainer roster in MAINTAINERS.md grows beyond one person.
+
+# Default: any Maintainer may review, unless a more specific rule below applies.
+*                           ramseyjohnson99@gmail.com
+
+# Canonical contracts and governance/security files require Core Maintainer review per
+# GOVERNANCE.md — Maintainers cannot unilaterally approve changes to these paths.
+/specs/                     ramseyjohnson99@gmail.com
+/contracts/                 ramseyjohnson99@gmail.com
+/adr/                       ramseyjohnson99@gmail.com
+/rfcs/                      ramseyjohnson99@gmail.com
+/.github/                   ramseyjohnson99@gmail.com
+/GOVERNANCE.md              ramseyjohnson99@gmail.com
+/SECURITY.md                ramseyjohnson99@gmail.com
+/VERSIONING.md              ramseyjohnson99@gmail.com
+/MAINTAINERS.md             ramseyjohnson99@gmail.com

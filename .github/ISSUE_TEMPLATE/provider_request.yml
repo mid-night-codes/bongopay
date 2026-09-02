@@ -1,0 +1,46 @@
+name: Provider request
+description: Request or propose support for a new payment provider adapter.
+title: "feat(adapter): "
+labels: ["provider"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provider adapters are a Phase 3 ("Provider Ecosystem") concern per ROADMAP.md, and land
+        under adapters/ once specs/providers/adapter-contract.md is stable. See
+        docs/providers/README.md and CONTRIBUTING.md#adding-a-provider for what's required.
+  - type: input
+    id: provider-name
+    attributes:
+      label: Provider name
+      description: e.g. M-Pesa, Airtel Money, a specific bank's API
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Capabilities this provider supports
+      description: Which of initiate / queryStatus / refund / partialRefund / reverse / callbacks (see specs/providers/adapter-contract.md) does this provider support?
+    validations:
+      required: true
+  - type: textarea
+    id: status-mapping
+    attributes:
+      label: Status and error mapping
+      description: How would this provider's own statuses/error codes map onto specs/state-machines/payment-lifecycle.md and specs/errors/README.md? Rough mapping is fine at request stage.
+    validations:
+      required: false
+  - type: textarea
+    id: provider-options
+    attributes:
+      label: Provider-specific fields
+      description: Any fields that would need to live under providerOptions.<provider> (see specs/providers/extensions.md) rather than the canonical contract.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I have not attached real credentials, sandbox secrets, or real transaction data to this issue
+          required: true

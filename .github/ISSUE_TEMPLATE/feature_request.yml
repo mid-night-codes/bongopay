@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose new behavior, a new canonical field, or a new capability.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If this is a breaking contract change, new provider plugin model, new event
+        architecture, security model change, or versioning policy change, it will need an RFC
+        (see rfcs/README.md) — this issue can still be the starting point for that discussion.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Who is affected if it isn't solved? Reference specs/ if a canonical concept is involved.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Sketch the change. Note which of specs/, contracts/, conformance/, or docs/ it would touch.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Expected governance scope
+      description: Your best guess — see AGENTS.md §8. It's fine to be unsure.
+      options:
+        - "Not sure"
+        - "No ADR/RFC needed (docs, tests, non-breaking fix)"
+        - "Likely needs an ADR"
+        - "Likely needs an RFC"
+    validations:
+      required: true
+  - type: textarea
+    id: roadmap
+    attributes:
+      label: Roadmap fit
+      description: Which ROADMAP.md phase does this belong to? Is it in the "What NOT to Build Yet" list?
+    validations:
+      required: false

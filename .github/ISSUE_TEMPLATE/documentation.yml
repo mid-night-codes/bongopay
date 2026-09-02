@@ -1,0 +1,27 @@
+name: Documentation improvement
+description: Something in docs/, a directory README, or a root-level doc is missing, unclear, or wrong.
+title: "docs: "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Where?
+      description: File or directory affected.
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's wrong or missing?
+      description: Be specific — "unclear" is harder to act on than "doesn't say whether X or Y applies."
+    validations:
+      required: true
+  - type: checkboxes
+    id: source-of-truth
+    attributes:
+      label: Source-of-truth check
+      description: Per specs/README.md, specs/ is authoritative — docs/ should link to it, not restate it.
+      options:
+        - label: This is a docs/README/root-doc issue, not a request to change a specs/ or contracts/ definition (if it is the latter, use the Feature request template instead)
+          required: true
