@@ -38,7 +38,11 @@ Merge
    contract (specs/ or contracts/), expect a discussion before implementation starts.
 2. **Discuss scope** in the issue, especially if the change might need an ADR or RFC (see
    [AGENTS.md §8](AGENTS.md#8-when-adrs-and-rfcs-are-required), which applies to humans too).
-3. **Fork the repository** (or branch directly, for maintainers) and create a branch.
+3. **Fork the repository** (or branch directly, for maintainers) and create a branch — always
+   cut from the current tip of `main`, never from a stale copy or on top of another feature
+   branch. AI agents: see
+   [.claude/skills/feature-branch/SKILL.md](.claude/skills/feature-branch/SKILL.md) for the
+   exact commands.
 4. **Implement the smallest reasonable change.** See "Keep Pull Requests Small" below.
 5. **Run validation locally**: `make validate`, `make lint`, `make test` (and
    `make test-conformance` if you touched a spec, contract, or adapter).
@@ -79,6 +83,11 @@ this should be rare and should already be backed by an RFC.
 This is enforced in CI, not just documented here — see
 [docs/development/ci.md](docs/development/ci.md) for the `commitlint` check that runs on every
 pull request.
+
+Each commit should be one fine-grained, task-specific, reviewable change — not an entire feature
+squashed into a single commit. Optionally scaffold messages in this format with a local commit
+template: `git config commit.template .gitmessage` (repo-local only; see
+[.gitmessage](.gitmessage)).
 
 ## Keep Pull Requests Small
 

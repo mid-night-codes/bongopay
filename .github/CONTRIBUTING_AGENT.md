@@ -11,29 +11,41 @@ assumptions explicitly") and does not repeat rules already stated there.
    ambiguous. If it's still ambiguous after restating it, that's the signal described in
    [AGENTS.md §15](../AGENTS.md#15-if-you-are-still-unsure) — stop and say so rather than
    guessing.
-2. **Read in the order AGENTS.md §1 specifies** — this file, the relevant directory README(s),
+2. **Branch from the current tip of `main`** before touching anything — see
+   [.claude/skills/feature-branch/SKILL.md](../.claude/skills/feature-branch/SKILL.md) for the
+   exact commands and branch naming. Never commit directly to `main`; never build on top of a
+   stale or unrelated branch.
+3. **Read in the order AGENTS.md §1 specifies** — this file, the relevant directory README(s),
    any relevant ADR, the governing spec, existing tests/conformance cases. Do not skip to
    writing code because the change "looks small."
-3. **Locate the smallest change.** If the smallest change that satisfies the request still
+4. **Locate the smallest change.** If the smallest change that satisfies the request still
    touches multiple directories (e.g. a spec change plus its contract derivation), that's
    expected — "small" means minimal *scope*, not minimal *file count*.
-4. **Check the ADR/RFC bar** (AGENTS.md §8) before writing the change, not after — discovering
+5. **Check the ADR/RFC bar** (AGENTS.md §8) before writing the change, not after — discovering
    partway through an implementation that it needed an RFC wastes the implementation work.
-5. **Implement.** Touch only files relevant to the request. If you notice an unrelated issue
-   while working, note it in the PR description rather than fixing it in the same PR.
-6. **Validate locally**: `make validate`, `make lint`, `make test`, `make docs`, and
+6. **Implement in fine-grained, task-specific commits.** Touch only files relevant to the
+   request per commit, and only commits relevant to the request overall. If you notice an
+   unrelated issue while working, note it in the PR description rather than fixing it in the
+   same branch. Each commit follows Conventional Commits (see
+   [CONTRIBUTING.md](../CONTRIBUTING.md#commit-messages-conventional-commits)) and is one
+   reviewable logical change, not the whole task at once.
+7. **Validate locally**: `make validate`, `make lint`, `make test`, `make docs`, and
    `make test-conformance` if applicable — see
    [docs/development/README.md](../docs/development/README.md).
-7. **Self-review your own diff** using the checklist below before writing the PR description.
-8. **Write the PR description** using
+8. **Self-review your own diff** using the checklist below before writing the PR description.
+9. **Push the branch (never `main`) and write the PR description** using
    [.github/pull_request_template.md](pull_request_template.md), stating assumptions explicitly.
 
 ## Self-Review Checklist
 
 Before opening a PR, confirm each of these — don't just assume they hold:
 
+- [ ] Work happened on a branch cut from the current tip of `main`, not on `main` itself and not
+      stacked on a stale or unrelated branch.
 - [ ] Every changed file is relevant to the stated request; nothing was touched "while I was in
       there."
+- [ ] History is fine-grained: each commit is one logical, reviewable change, not the whole task
+      squashed together.
 - [ ] If `specs/` or `contracts/` changed, the compatibility impact (patch/minor/breaking, per
       [VERSIONING.md](../VERSIONING.md)) is stated in the PR description.
 - [ ] If an ADR/RFC was required, it's attached/linked — not deferred to "a follow-up."
