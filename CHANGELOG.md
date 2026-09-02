@@ -75,5 +75,11 @@ This closes Phase 0 ("Foundation") per [ROADMAP.md](ROADMAP.md): every `make` ta
 `clean`) passes, and every directory referenced from the root `README.md` and `AGENTS.md` has a
 README.
 
+### Added (Phase 1)
+
+- [ADR 0002](adr/0002-reference-implementation-language-go.md): the reference implementation
+  (`implementations/reference/`) will be written in Go, unblocking implementation work per
+  [implementations/README.md](implementations/README.md).
+
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
