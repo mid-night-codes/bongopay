@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   authorize:
@@ -18,14 +19,21 @@ jobs:
       - name: Evaluate author association
         id: check
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
-          ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Direct pushes (e.g. to main) are already gated by repo push access, not a PR.
           if [ "$EVENT_NAME" != "pull_request" ]; then
             echo "trusted=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # Re-fetch association live rather than trusting the webhook payload's
+          # author_association snapshot, which can be stale (observed as NONE for an actual
+          # org MEMBER on this repo) — see docs/development/ci.md for the incident this fixed.
+          ASSOCIATION=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .author_association)
+          echo "Live author_association: $ASSOCIATION"
           # OWNER/MEMBER/COLLABORATOR: repo access already implies trust.
           # CONTRIBUTOR: has a prior merged PR here, per AGENTS.md's spirit of proportional trust.
           # Everyone else (FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE, MANNEQUIN) needs review.

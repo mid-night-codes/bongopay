@@ -34,7 +34,11 @@ one is **not** gated by maintainer approval — see why in the next section.
 
 A pull request's `authorize` job checks the author's GitHub
 [`author_association`](https://docs.github.com/en/graphql/reference/enums#commentauthorassociation)
-with this repository:
+with this repository, fetched live via `gh api repos/<repo>/pulls/<number>` rather than read
+from the triggering webhook's event payload — the payload's `author_association` field was
+observed returning `NONE` for an actual repository `MEMBER` (likely a caching lag for a
+just-added org member), which would have wrongly gated a trusted maintainer's PR. A live API
+call at job-run time reflects current reality instead of a stale snapshot.
 
 - **`OWNER`, `MEMBER`, `COLLABORATOR`, or `CONTRIBUTOR`** (i.e. anyone with repo access, or
   anyone who has landed a merged PR here before) — CI runs immediately, same as a push to `main`.
