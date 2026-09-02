@@ -1,0 +1,22 @@
+name: Commit messages
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    name: Validate commit messages (Conventional Commits)
+    runs-on: ubuntu-latest
+    # Runs unconditionally, not behind the CI approval gate in ci.yml: this job only reads
+    # commit message text against the static, JSON-only .commitlintrc.json (no code execution
+    # surface), unlike the `make` targets in ci.yml which execute scripts/*.sh from the PR
+    # branch itself. See docs/development/ci.md for the full reasoning.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: wagoid/commitlint-github-action@v6
