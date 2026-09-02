@@ -1,0 +1,10 @@
+# Local validation tooling artifacts (see scripts/clean.sh)
+node_modules/
+.cache/
+
+# OS cruft
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
