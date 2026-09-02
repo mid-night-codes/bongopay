@@ -12,9 +12,9 @@ assumptions explicitly") and does not repeat rules already stated there.
    [AGENTS.md §15](../AGENTS.md#15-if-you-are-still-unsure) — stop and say so rather than
    guessing.
 2. **Branch from the current tip of `main`** before touching anything — see
-   [.claude/skills/feature-branch/SKILL.md](../.claude/skills/feature-branch/SKILL.md) for the
-   exact commands and branch naming. Never commit directly to `main`; never build on top of a
-   stale or unrelated branch.
+   [Branching and Commit Workflow](#branching-and-commit-workflow) below for the exact commands
+   and branch naming. Never commit directly to `main`; never build on top of a stale or
+   unrelated branch.
 3. **Read in the order AGENTS.md §1 specifies** — this file, the relevant directory README(s),
    any relevant ADR, the governing spec, existing tests/conformance cases. Do not skip to
    writing code because the change "looks small."
@@ -35,6 +35,62 @@ assumptions explicitly") and does not repeat rules already stated there.
 8. **Self-review your own diff** using the checklist below before writing the PR description.
 9. **Push the branch (never `main`) and write the PR description** using
    [.github/pull_request_template.md](pull_request_template.md), stating assumptions explicitly.
+
+## Branching and Commit Workflow
+
+Every task starts from a fresh branch off `main` and ends as a pushed branch with a PR — never
+a direct commit to `main`. This applies regardless of which AI agent or tool is doing the work
+(see [AGENTS.md](../AGENTS.md)'s tool-agnostic framing).
+
+### 1. Sync with the default branch
+
+```bash
+git fetch origin
+git checkout main
+git pull origin main
+```
+
+Always branch from the current tip of `main`, never from a stale local copy or on top of
+another feature branch.
+
+### 2. Create a task-specific branch
+
+Name it `<type>/<short-kebab-case-description>` per
+[CONTRIBUTING.md](../CONTRIBUTING.md#branch-naming), using the same types as commits:
+
+```bash
+git checkout -b docs/provider-adapter-contract
+```
+
+One branch per task. Do not pile a second, unrelated task onto an existing branch — cut a new
+one from `main` instead, even if it means repeating step 1.
+
+### 3. Make fine-grained, task-specific commits
+
+Each commit is one reviewable logical change — a spec change, its contract derivation, a docs
+update — not the whole task squashed into one commit. Follow
+[CONTRIBUTING.md](../CONTRIBUTING.md#commit-messages-conventional-commits)'s Conventional
+Commits format (enforced by `commitlint.yml`); the [.gitmessage](../.gitmessage) template
+documents the exact shape if you enable it locally
+(`git config commit.template .gitmessage` — repo-local only, never set globally on someone's
+behalf).
+
+**Commit identity:** use whatever author name/email the user has specified for the session. Do
+not fall back to a machine's global `git config user.*` without confirming it's the identity
+intended for this repo — and never run `git config` to change identity globally; scope an
+override to the individual `git commit` invocation instead (e.g.
+`git -c user.name="..." -c user.email="..." commit`).
+
+### 4. Push the branch and open a PR
+
+```bash
+git push -u origin <branch-name>
+gh pr create --fill
+```
+
+Never push a feature branch's commits directly to `main`. A PR from a non-contributor pauses in
+CI for maintainer approval per [docs/development/ci.md](../docs/development/ci.md) — that is
+expected, not a failure to fix.
 
 ## Self-Review Checklist
 
