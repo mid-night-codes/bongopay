@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    name: setup, validate, lint, test, docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up Node (for optional markdown linting)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: make setup
+        run: make setup
+
+      - name: make validate
+        run: make validate
+
+      - name: make lint
+        run: make lint
+
+      - name: make test
+        run: make test
+
+      - name: make docs
+        run: make docs

@@ -1,0 +1,16 @@
+# Dependabot configuration.
+# See docs/development/dependency-policy.md and docs/development/ci.md#dependency-and-supply-chain-scanning.
+#
+# Phase 0: only the github-actions ecosystem exists to scan (the CI workflow itself). Add an
+# ecosystem entry here only once implementations/, adapters/, or sdks/ actually adopt a language
+# package manager — never speculatively ahead of a real dependency existing (see
+# docs/development/dependency-policy.md).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
