@@ -39,17 +39,22 @@ All of the above are safe to run repeatedly and never mutate source files — se
 
 ## Everyday Workflow
 
-1. Read [AGENTS.md](../../AGENTS.md) §1 ("Read Before You Write") for the order to read things
+1. Branch from the current tip of `main` — never commit directly to `main`. See
+   [CONTRIBUTING.md](../../CONTRIBUTING.md#branch-naming) for naming, or
+   [.github/CONTRIBUTING_AGENT.md](../../.github/CONTRIBUTING_AGENT.md#branching-and-commit-workflow)
+   for the exact commands if you're an AI agent.
+2. Read [AGENTS.md](../../AGENTS.md) §1 ("Read Before You Write") for the order to read things
    in before changing anything — this applies to human contributors too, not just AI agents.
-2. Make the smallest change that satisfies the issue/request (see
-   [CONTRIBUTING.md](../../CONTRIBUTING.md#keep-pull-requests-small)).
-3. Before opening a PR, run:
+3. Make the smallest change that satisfies the issue/request (see
+   [CONTRIBUTING.md](../../CONTRIBUTING.md#keep-pull-requests-small)), as a series of
+   fine-grained, task-specific commits rather than one large one.
+4. Before opening a PR, run:
 
    ```bash
    make validate && make lint && make test && make docs
    ```
 
-4. If your change touches `specs/` or `contracts/`, check whether it needs an
+5. If your change touches `specs/` or `contracts/`, check whether it needs an
    [ADR](../../adr/README.md) or [RFC](../../rfcs/README.md) per
    [AGENTS.md §8](../../AGENTS.md#8-when-adrs-and-rfcs-are-required) *before* writing the change,
    not after.

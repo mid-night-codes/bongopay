@@ -15,28 +15,39 @@ jobs:
     outputs:
       trusted: ${{ steps.check.outputs.trusted }}
     steps:
-      - name: Evaluate author association
+      - name: Evaluate trust level
         id: check
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
-          ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          REPO: ${{ github.repository }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           # Direct pushes (e.g. to main) are already gated by repo push access, not a PR.
           if [ "$EVENT_NAME" != "pull_request" ]; then
             echo "trusted=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # OWNER/MEMBER/COLLABORATOR: repo access already implies trust.
-          # CONTRIBUTOR: has a prior merged PR here, per AGENTS.md's spirit of proportional trust.
-          # Everyone else (FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE, MANNEQUIN) needs review.
-          case "$ASSOCIATION" in
-            OWNER|MEMBER|COLLABORATOR|CONTRIBUTOR)
-              echo "trusted=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "trusted=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+          # A PR from a branch in *this* repo (not a fork) requires push access to have
+          # created that branch in the first place — trust it without further checks. This is
+          # more robust than GitHub's author_association, which was observed returning NONE
+          # for an actual org MEMBER (privacy-dependent — see docs/development/ci.md for the
+          # incident) rather than a reliable signal.
+          if [ "$IS_FORK" != "true" ]; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fork PR: trust it only if this author already has a merged PR in this repo —
+          # mirrors GitHub's own CONTRIBUTOR vs. FIRST_TIME_CONTRIBUTOR distinction, computed
+          # from public merged-PR history rather than a privacy-sensitive association field.
+          MERGED_COUNT=$(gh api "search/issues?q=repo:${REPO}+type:pr+is:merged+author:${AUTHOR}" --jq '.total_count')
+          echo "Merged PRs by $AUTHOR in $REPO: $MERGED_COUNT"
+          if [ "$MERGED_COUNT" -gt 0 ]; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "trusted=false" >> "$GITHUB_OUTPUT"
+          fi
 
   await-maintainer-approval:
     name: Await maintainer approval (non-contributor PR)
