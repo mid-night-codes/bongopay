@@ -1,0 +1,18 @@
+{
+  // Config for `make lint` (scripts/lint.sh -> markdownlint-cli2). Defaults are tuned for
+  // short, code-comment-style Markdown; this repository's docs are long-form prose with
+  // cross-reference-heavy links and tables (see AGENTS.md, ARCHITECTURE.md), so a few rules
+  // are relaxed to match the house style actually in use rather than reflowing every doc.
+  "config": {
+    "default": true,
+    // Hard line-wrapping at 80 chars fights readable cross-reference links and mid-sentence
+    // Markdown links throughout specs/, docs/, and the root governance files.
+    "MD013": false,
+    // Enforces a specific pipe-spacing style; this repo's tables consistently use
+    // GFM-standard padded pipes, which MD060's default "compact" style flags.
+    "MD060": false,
+    // PR/issue templates intentionally open with an HTML comment or front matter before the
+    // first heading.
+    "MD041": false
+  }
+}
