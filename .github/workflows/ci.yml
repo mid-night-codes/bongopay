@@ -5,9 +5,55 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  authorize:
+    name: Determine contributor trust level
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.check.outputs.trusted }}
+    steps:
+      - name: Evaluate author association
+        id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ASSOCIATION: ${{ github.event.pull_request.author_association }}
+        run: |
+          # Direct pushes (e.g. to main) are already gated by repo push access, not a PR.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # OWNER/MEMBER/COLLABORATOR: repo access already implies trust.
+          # CONTRIBUTOR: has a prior merged PR here, per AGENTS.md's spirit of proportional trust.
+          # Everyone else (FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE, MANNEQUIN) needs review.
+          case "$ASSOCIATION" in
+            OWNER|MEMBER|COLLABORATOR|CONTRIBUTOR)
+              echo "trusted=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "trusted=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+  await-maintainer-approval:
+    name: Await maintainer approval (non-contributor PR)
+    needs: authorize
+    if: needs.authorize.outputs.trusted == 'false'
+    runs-on: ubuntu-latest
+    # Gated by the "external-contribution-review" environment's required reviewers — the job
+    # pauses in "Waiting" state until a maintainer approves the run from the Actions tab.
+    environment: external-contribution-review
+    steps:
+      - name: Approved
+        run: echo "A maintainer approved this run — proceeding to CI."
+
   validate:
     name: setup, validate, lint, test, docs
+    needs: [authorize, await-maintainer-approval]
+    if: ${{ always() && (needs.authorize.outputs.trusted == 'true' || needs.await-maintainer-approval.result == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

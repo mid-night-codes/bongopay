@@ -20,6 +20,29 @@ make docs      # internal markdown link resolution
 Per [AGENTS.md §5](../../AGENTS.md#5-commands-you-should-avoid), none of these may be bypassed
 (`--no-verify`, skipping `make validate`) to force a PR through.
 
+## Maintainer Approval for Non-Contributor Pull Requests
+
+A pull request's `authorize` job checks the author's GitHub
+[`author_association`](https://docs.github.com/en/graphql/reference/enums#commentauthorassociation)
+with this repository:
+
+- **`OWNER`, `MEMBER`, `COLLABORATOR`, or `CONTRIBUTOR`** (i.e. anyone with repo access, or
+  anyone who has landed a merged PR here before) — CI runs immediately, same as a push to `main`.
+- **Anyone else** (`FIRST_TIME_CONTRIBUTOR`, `FIRST_TIMER`, `NONE`, `MANNEQUIN`) — the
+  `await-maintainer-approval` job pauses in "Waiting" state, gated by the
+  `external-contribution-review` GitHub Environment's required-reviewer protection rule. A
+  maintainer must click **Review deployments → Approve** in the Actions tab before the
+  `validate` job (and therefore any of the `make` targets above) runs at all.
+
+This exists because a PR's workflow run executes arbitrary code from that PR's branch — running
+it unattended for a first-time, unvetted contributor is a real supply-chain exposure, not just a
+CI nicety. It does **not** replace [GOVERNANCE.md](../../GOVERNANCE.md)'s review-and-merge
+process; it only gates whether CI *executes* before a human has looked at the diff.
+
+The `external-contribution-review` environment's reviewer list is managed in the repository's
+Settings → Environments, independent of this workflow file — updating who may approve does not
+require a workflow change.
+
 ## Dependency and Supply-Chain Scanning
 
 Automated dependency updates are configured in
