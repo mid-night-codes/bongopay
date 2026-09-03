@@ -9,10 +9,30 @@ import (
 	"time"
 )
 
-// ErrMissingIdempotencyKey is returned by Service.Create when PaymentRequest.IdempotencyKey is
-// empty. This is a provisional, package-local error, not the canonical error taxonomy —
+// These are provisional, package-local errors, not the canonical error taxonomy —
 // specs/errors/error-model.md is still TODO(ADR); do not treat this as that model's shape.
-var ErrMissingIdempotencyKey = errors.New("payment: idempotencyKey is required")
+var (
+	// ErrMissingIdempotencyKey is returned by Service.Create when
+	// PaymentRequest.IdempotencyKey is empty.
+	ErrMissingIdempotencyKey = errors.New("payment: idempotencyKey is required")
+
+	// ErrPaymentNotFound is returned by Service.ApplyTransition when no Payment exists for
+	// the given ID.
+	ErrPaymentNotFound = errors.New("payment: payment not found")
+)
+
+// TransitionError reports a genuinely conflicting status update — a target status that is
+// neither the payment's current status (that case is a no-op, not an error; see
+// Service.ApplyTransition) nor a valid next state per
+// specs/state-machines/payment-lifecycle.md.
+type TransitionError struct {
+	From PaymentStatus
+	To   PaymentStatus
+}
+
+func (e *TransitionError) Error() string {
+	return fmt.Sprintf("payment: invalid transition from %s to %s", e.From, e.To)
+}
 
 // IDGenerator produces a new canonical Payment.ID. Injectable so tests get deterministic IDs.
 type IDGenerator func() string
@@ -99,6 +119,44 @@ func (s *Service) Create(req PaymentRequest) (Payment, error) {
 
 	if err := s.store.Save(p); err != nil {
 		return Payment{}, fmt.Errorf("payment: saving new payment: %w", err)
+	}
+
+	return p, nil
+}
+
+// ApplyTransition moves the payment identified by id to status to, per
+// specs/state-machines/payment-lifecycle.md "Idempotency and Retries":
+//
+//   - to equals the payment's current status: a duplicate delivery of an already-applied
+//     event. No-op — the store is not touched and the current Payment is returned unchanged.
+//   - to is a valid next state per CanTransition: applied normally, UpdatedAt is refreshed.
+//   - anything else: a genuinely conflicting update. Returns *TransitionError and does not
+//     mutate the stored Payment.
+//
+// Like Create, this is mutex-serialized per Service so a concurrent duplicate and a concurrent
+// valid transition can't race against each other.
+func (s *Service) ApplyTransition(id string, to PaymentStatus) (Payment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	p, ok := s.store.FindByID(id)
+	if !ok {
+		return Payment{}, ErrPaymentNotFound
+	}
+
+	if p.Status == to {
+		return p, nil
+	}
+
+	if !CanTransition(p.Status, to) {
+		return Payment{}, &TransitionError{From: p.Status, To: to}
+	}
+
+	p.Status = to
+	p.UpdatedAt = s.now()
+
+	if err := s.store.Save(p); err != nil {
+		return Payment{}, fmt.Errorf("payment: saving transition: %w", err)
 	}
 
 	return p, nil
