@@ -96,6 +96,11 @@ README.
 - A `go` job in `.github/workflows/ci.yml` running `go build`/`vet`/`test` and a `gofmt` check
   against `implementations/reference/`, gated by the same maintainer-approval check as
   `validate`.
+- `implementations/reference/internal/payment/{store,service}.go`: an in-memory `Store` and a
+  `Service.Create` enforcing `specs/payments/payment-contract.md`'s idempotency-key requirement
+  — concurrent calls with the same key return the same `Payment`, verified under `go test
+  -race`. `ErrMissingIdempotencyKey` is a provisional, package-local error, not the canonical
+  taxonomy (`specs/errors/error-model.md` is still unwritten).
 
 ### Changed
 
