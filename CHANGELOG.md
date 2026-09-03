@@ -101,6 +101,16 @@ README.
   — concurrent calls with the same key return the same `Payment`, verified under `go test
   -race`. `ErrMissingIdempotencyKey` is a provisional, package-local error, not the canonical
   taxonomy (`specs/errors/error-model.md` is still unwritten).
+- `Service.ApplyTransition`, applying `specs/state-machines/payment-lifecycle.md`'s "Idempotency
+  and Retries" rule: a duplicate delivery of the current status is a no-op (store untouched), a
+  valid transition applies normally, and a genuinely conflicting update returns a
+  `*TransitionError` without mutating anything — all three cases covered by tests, including
+  that a no-op and a rejected conflict both leave `UpdatedAt` unchanged.
+
+- A "Stacked PRs" section in `.github/CONTRIBUTING_AGENT.md` covering when a task genuinely
+  depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking
+  footgun that introduces, and how to keep stack depth/rebasing manageable (missed logging this
+  one when it merged — noting it now rather than leaving the record incomplete).
 
 ### Changed
 
