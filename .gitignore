@@ -12,3 +12,7 @@ node_modules/
 # Tool-specific agent config/state — instructions for AI agents live in .github/ and AGENTS.md
 # instead, per AGENTS.md's tool-agnostic framing (this repo isn't Claude-Code-specific).
 .claude/
+
+# Go build artifacts (see implementations/reference/)
+implementations/reference/bin/
+*.test
