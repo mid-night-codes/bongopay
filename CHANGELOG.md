@@ -80,6 +80,20 @@ README.
 - [ADR 0002](adr/0002-reference-implementation-language-go.md): the reference implementation
   (`implementations/reference/`) will be written in Go, unblocking implementation work per
   [implementations/README.md](implementations/README.md).
+- `implementations/reference/internal/payment`: the canonical domain types from
+  `specs/payments/payment-contract.md` and the state machine from
+  `specs/state-machines/payment-lifecycle.md`, with exhaustive tests over every `(from, to)`
+  status pair.
+- A `go` job in `.github/workflows/ci.yml` running `go build`/`vet`/`test` and a `gofmt` check
+  against `implementations/reference/`, gated by the same maintainer-approval check as
+  `validate`.
+
+### Changed
+
+- `scripts/test.sh` (`make test`) now actually dispatches to `go test ./...` for every
+  `go.mod` found under `implementations/`, `adapters/`, or `sdks/`, instead of exiting 1 with a
+  `TODO` the moment any `*_test.*` file existed anywhere in those directories — the placeholder
+  it replaces was written before there was real code to hit that branch.
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
