@@ -67,7 +67,7 @@ jobs:
     if: ${{ always() && (needs.authorize.outputs.trusted == 'true' || needs.await-maintainer-approval.result == 'success') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -103,7 +103,7 @@ jobs:
       run:
         working-directory: implementations/reference
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Go
         uses: actions/setup-go@v5

@@ -15,7 +15,7 @@ jobs:
     # surface), unlike the `make` targets in ci.yml which execute scripts/*.sh from the PR
     # branch itself. See docs/development/ci.md for the full reasoning.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
