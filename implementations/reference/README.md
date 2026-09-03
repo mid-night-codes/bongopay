@@ -17,12 +17,16 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   enforces [specs/payments/payment-contract.md](../../specs/payments/payment-contract.md)
   "Idempotency": concurrent calls with the same `IdempotencyKey` return the same `Payment`,
   never a second one (covered by a `-race`-clean test).
+- `Service.ApplyTransition` — applies canonical state transitions per
+  [specs/state-machines/payment-lifecycle.md](../../specs/state-machines/payment-lifecycle.md)
+  "Idempotency and Retries": a duplicate delivery of the current status is a no-op, a valid
+  transition applies normally, and a genuinely conflicting update (e.g. `FAILED` claimed for an
+  already-`SUCCESS` payment) returns a `*TransitionError` without mutating anything.
 
-Not yet implemented: applying further state transitions (refund/reversal/callback-driven
-status updates), the simulator, webhook handling, and the REST contract — see
-[ROADMAP.md](../../ROADMAP.md) Phase 1. `Service.Create`'s errors
-(`ErrMissingIdempotencyKey`) are provisional and package-local, not the canonical error
-taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
+Not yet implemented: the simulator, webhook handling, and the REST contract — see
+[ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors (`ErrMissingIdempotencyKey`,
+`ErrPaymentNotFound`, `TransitionError`) are provisional and package-local, not the canonical
+error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
 
 `internal/` is deliberate: this package is not meant to be imported by `adapters/` or `sdks/` —
 per [ARCHITECTURE.md §8](../../ARCHITECTURE.md#8-reference-implementation-boundary), the
