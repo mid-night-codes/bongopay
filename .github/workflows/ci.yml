@@ -93,3 +93,37 @@ jobs:
 
       - name: make docs
         run: make docs
+
+  go:
+    name: Go build, vet, test, fmt (implementations/reference)
+    needs: [authorize, await-maintainer-approval]
+    if: ${{ always() && (needs.authorize.outputs.trusted == 'true' || needs.await-maintainer-approval.result == 'success') }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: implementations/reference
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: implementations/reference/go.mod
+
+      - name: go build
+        run: go build ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+      - name: gofmt check
+        run: |
+          fmt_out="$(gofmt -l .)"
+          if [ -n "$fmt_out" ]; then
+            echo "gofmt would reformat the following files — run 'gofmt -w .' locally:"
+            echo "$fmt_out"
+            exit 1
+          fi
