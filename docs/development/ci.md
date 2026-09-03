@@ -20,6 +20,15 @@ make docs      # internal markdown link resolution
 Per [AGENTS.md §5](../../AGENTS.md#5-commands-you-should-avoid), none of these may be bypassed
 (`--no-verify`, skipping `make validate`) to force a PR through.
 
+A separate `go` job runs `go build`, `go vet`, `go test`, and a `gofmt` check against
+[implementations/reference/](../../implementations/reference/README.md) — see
+[ADR 0002](../../adr/0002-reference-implementation-language-go.md) for why Go. It is gated by
+the same `authorize`/`await-maintainer-approval` jobs as `validate`, since it also executes code
+from the PR branch. `go test` also runs as part of `make test` above (see
+[scripts/test.sh](../../scripts/test.sh)) — but the `validate` job's runner has no Go toolchain
+installed, so there it degrades gracefully to a skip message rather than failing; the dedicated
+`go` job is what actually verifies Go code in CI.
+
 Separately, [.github/workflows/commitlint.yml](../../.github/workflows/commitlint.yml) validates
 every commit in a pull request against the
 [Conventional Commits](../../CONTRIBUTING.md#commit-messages-conventional-commits) format via
