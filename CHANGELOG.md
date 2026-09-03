@@ -106,6 +106,10 @@ README.
   valid transition applies normally, and a genuinely conflicting update returns a
   `*TransitionError` without mutating anything — all three cases covered by tests, including
   that a no-op and a rejected conflict both leave `UpdatedAt` unchanged.
+- [specs/scenarios/scenario-format.md](specs/scenarios/scenario-format.md): the declarative
+  scenario format (`Scenario`, `Outcome`'s six modes, how each maps onto the canonical state
+  machine, and how `providerOptions.simulator.scenario` selects one), unblocking simulator
+  implementation work.
 
 - A "Stacked PRs" section in `.github/CONTRIBUTING_AGENT.md` covering when a task genuinely
   depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking

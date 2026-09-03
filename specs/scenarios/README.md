@@ -6,15 +6,15 @@ rarely let you trigger on demand.
 
 ## Status
 
-**Draft / Phase 0.** Directory established to unblock cross-references from
-[ARCHITECTURE.md §6](../../ARCHITECTURE.md#6-simulator-boundary); the scenario format itself is
-not yet written.
+**Draft / Phase 1.** The scenario format is drafted in
+[scenario-format.md](scenario-format.md) with several fields still open — see that document's
+"Open TODOs". Not yet implemented by the simulator itself (tracked separately).
 
 ## Contents
 
-- `scenario-format.md` — **TODO(ADR): not yet written.** Will define the declarative scenario
-  schema: how a scenario selects outcomes (success, failure, timeout, duplicate callback,
-  out-of-order event, invalid signature) and any timing/sequencing controls.
+- [scenario-format.md](scenario-format.md) — the declarative scenario schema: how a scenario
+  selects an outcome (success, failure, timeout, duplicate callback, out-of-order event, invalid
+  signature) and its (currently minimal) timing controls.
 
 ## Rules Specific to This Directory
 
