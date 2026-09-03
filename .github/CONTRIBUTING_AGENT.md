@@ -78,8 +78,10 @@ git checkout main
 git pull origin main
 ```
 
-Always branch from the current tip of `main`, never from a stale local copy or on top of
-another feature branch.
+Branch from the current tip of `main`, never from a stale local copy — **unless** the task
+genuinely depends on unmerged work in another open PR, in which case branch from that PR's
+branch instead. See [Stacked PRs](#stacked-prs) below for when that applies and how to keep it
+manageable.
 
 ### 2. Create a task-specific branch
 
@@ -126,14 +128,62 @@ resolve it). Never push a feature branch's commits directly to `main`. A PR from
 non-contributor pauses in CI for maintainer approval per
 [docs/development/ci.md](../docs/development/ci.md) — that is expected, not a failure to fix.
 
+## Stacked PRs
+
+Sometimes a task genuinely needs code or docs that only exist on another open, unmerged PR's
+branch — not just "it would be convenient to skip a merge wait." Use a stacked PR for that case
+instead of either blocking on the other PR merging first, or duplicating its unmerged content.
+
+**When it applies:** the new task imports a type, calls a function, or edits a section that only
+exists on `some-open-pr-branch`, and rewriting around that dependency would be artificial (e.g.
+extending a "Branching and Commit Workflow" section a still-open PR is introducing, the way this
+change stacks on [PR #9](https://github.com/mid-night-codes/bongopay/pull/9)). It does not apply
+just because two tasks happen to be in flight at the same time with no real dependency between
+them — those still each branch from `main` per step 1.
+
+**How to do it:**
+
+```bash
+git fetch origin
+git checkout -b <new-branch> origin/<base-pr-branch>
+git branch --unset-upstream   # avoid accidentally pushing over the base PR's branch, see below
+```
+
+`git checkout -b <new> <remote-ref>` sets up the new local branch to track that remote ref by
+default — meaning a bare `git push` would push to the *base PR's* remote branch, not create
+yours. Always follow with `git branch --unset-upstream`, and always push with an explicit
+branch name:
+
+```bash
+git push -u origin <new-branch>
+gh pr create --fill --base <base-pr-branch> --head <new-branch>
+```
+
+The `--base` is what makes it a stacked PR on GitHub — the diff shown is only *your* commits on
+top of the base branch, not the base branch's changes too.
+
+**Keeping it manageable:**
+
+- Prefer a stack depth of one. If task C depends on unmerged B which depends on unmerged A,
+  that's a sign to slow down and get A merged before starting C, not to build a three-deep
+  stack — conflicts compound with depth.
+- Merge bottom-up: the base PR merges first, then retarget the stacked PR's base to `main`
+  (`gh pr edit <n> --base main`) and rebase (`git rebase main`) before it merges too.
+- If the base PR changes after you've branched from it (a fixup commit, a force-push from
+  review feedback), rebase your stacked branch onto the new tip rather than leaving it stale.
+- State the stacking explicitly in the stacked PR's description (which PR/issue it depends on
+  and why) — a reviewer seeing an unfamiliar base branch with no explanation will assume it's a
+  mistake.
+
 ## Self-Review Checklist
 
 Before opening a PR, confirm each of these — don't just assume they hold:
 
 - [ ] An open issue exists for this work and is referenced (`Refs #N`/`Closes #N`) in a commit
       or the PR body — created before the first commit, not added after the fact.
-- [ ] Work happened on a branch cut from the current tip of `main`, not on `main` itself and not
-      stacked on a stale or unrelated branch.
+- [ ] Work happened on a branch cut from the current tip of `main`, not on `main` itself — or,
+      if genuinely [stacked](#stacked-prs), the PR's `--base` matches the real dependency and
+      that dependency is stated in the PR description.
 - [ ] Every changed file is relevant to the stated request; nothing was touched "while I was in
       there."
 - [ ] History is fine-grained: each commit is one logical, reviewable change, not the whole task
