@@ -12,17 +12,14 @@ specs/  → contracts/  → conformance/  → implementations/ (+ adapters/, sdk
 
 ## Status
 
-**Not started — Phase 1.** [reference/](reference/) exists as a placeholder directory. Its
-implementation language is an open decision — see
-[ARCHITECTURE.md §14](../ARCHITECTURE.md#14-what-this-document-does-not-decide),
-`TODO(ADR): Reference implementation language`. Nothing should be implemented here until that
-ADR exists, since the choice affects `sdks/` and `adapters/` scaffolding too.
+**Starting — Phase 1.** [reference/](reference/) will be written in **Go**, per
+[ADR 0002](../adr/0002-reference-implementation-language-go.md).
 
 ## Layout
 
 | Directory | Covers |
 |---|---|
-| [reference/](reference/) | The reference implementation once a language is chosen (Phase 1) |
+| [reference/](reference/) | The Go reference implementation (Phase 1) |
 
 ## Rules for Working in `implementations/`
 

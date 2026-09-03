@@ -195,7 +195,8 @@ flowchart TD
 The following are intentionally left open and tracked as TODOs, to be resolved via ADR/RFC as
 the project matures (see [ROADMAP.md](ROADMAP.md)):
 
-- TODO(ADR): Reference implementation language.
+- ~~TODO(ADR): Reference implementation language.~~ Decided: Go — see
+  [ADR 0002](adr/0002-reference-implementation-language-go.md).
 - TODO(ADR): Persistence architecture for a stateful reference implementation.
 - TODO(ADR): Event transport/broker choice for a deployable (non-embedded) implementation.
 - TODO(RFC): Long-term plugin/runtime model for community-contributed provider adapters.
