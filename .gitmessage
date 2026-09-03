@@ -8,12 +8,16 @@
 # --- Body (optional, blank line above) ---
 # Explain *why*, not *what* — the diff already shows what changed. Wrap around ~90 chars.
 #
-# --- Footer (optional, blank line above) ---
+# --- Footer (blank line above) ---
 # BREAKING CHANGE: <what breaks, and the migration path>
-# Refs: #<issue-number>
+# Refs: #<issue-number>       (work in progress against the issue)
+# Closes: #<issue-number>     (this commit/PR resolves it)
+#
+# Every commit traces to an open issue — find one or `gh issue create` before your first
+# commit, then reference it here. Not optional; see .github/CONTRIBUTING_AGENT.md.
 #
 # One logical, reviewable change per commit — not the whole task in one commit. See
-# .claude/skills/feature-branch/SKILL.md for the branch + commit workflow this repo expects.
+# .github/CONTRIBUTING_AGENT.md for the branch + commit workflow this repo expects.
 #
 # This template is enabled per-clone, not globally, by design (see Git Safety Protocol) — run:
 #   git config commit.template .gitmessage

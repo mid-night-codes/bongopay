@@ -11,36 +11,64 @@ assumptions explicitly") and does not repeat rules already stated there.
    ambiguous. If it's still ambiguous after restating it, that's the signal described in
    [AGENTS.md §15](../AGENTS.md#15-if-you-are-still-unsure) — stop and say so rather than
    guessing.
-2. **Branch from the current tip of `main`** before touching anything — see
+2. **Find or create an open issue for this task** — before branching, before any commit. See
+   [Branching and Commit Workflow](#branching-and-commit-workflow) step 0 below. A commit or PR
+   with no issue behind it is incomplete, not just under-documented.
+3. **Branch from the current tip of `main`** before touching anything — see
    [Branching and Commit Workflow](#branching-and-commit-workflow) below for the exact commands
    and branch naming. Never commit directly to `main`; never build on top of a stale or
    unrelated branch.
-3. **Read in the order AGENTS.md §1 specifies** — this file, the relevant directory README(s),
+4. **Read in the order AGENTS.md §1 specifies** — this file, the relevant directory README(s),
    any relevant ADR, the governing spec, existing tests/conformance cases. Do not skip to
    writing code because the change "looks small."
-4. **Locate the smallest change.** If the smallest change that satisfies the request still
+5. **Locate the smallest change.** If the smallest change that satisfies the request still
    touches multiple directories (e.g. a spec change plus its contract derivation), that's
    expected — "small" means minimal *scope*, not minimal *file count*.
-5. **Check the ADR/RFC bar** (AGENTS.md §8) before writing the change, not after — discovering
+6. **Check the ADR/RFC bar** (AGENTS.md §8) before writing the change, not after — discovering
    partway through an implementation that it needed an RFC wastes the implementation work.
-6. **Implement in fine-grained, task-specific commits.** Touch only files relevant to the
+7. **Implement in fine-grained, task-specific commits.** Touch only files relevant to the
    request per commit, and only commits relevant to the request overall. If you notice an
    unrelated issue while working, note it in the PR description rather than fixing it in the
    same branch. Each commit follows Conventional Commits (see
    [CONTRIBUTING.md](../CONTRIBUTING.md#commit-messages-conventional-commits)) and is one
    reviewable logical change, not the whole task at once.
-7. **Validate locally**: `make validate`, `make lint`, `make test`, `make docs`, and
+8. **Validate locally**: `make validate`, `make lint`, `make test`, `make docs`, and
    `make test-conformance` if applicable — see
    [docs/development/README.md](../docs/development/README.md).
-8. **Self-review your own diff** using the checklist below before writing the PR description.
-9. **Push the branch (never `main`) and write the PR description** using
-   [.github/pull_request_template.md](pull_request_template.md), stating assumptions explicitly.
+9. **Self-review your own diff** using the checklist below before writing the PR description.
+10. **Push the branch (never `main`) and write the PR description** using
+    [.github/pull_request_template.md](pull_request_template.md), stating assumptions
+    explicitly, and linking the issue from step 2 (`Closes #N` or `Refs #N`).
 
 ## Branching and Commit Workflow
 
 Every task starts from a fresh branch off `main` and ends as a pushed branch with a PR — never
 a direct commit to `main`. This applies regardless of which AI agent or tool is doing the work
 (see [AGENTS.md](../AGENTS.md)'s tool-agnostic framing).
+
+### 0. Find or create an open issue
+
+No commit happens without an open issue behind it. Before doing anything else:
+
+```bash
+gh issue list -R <owner>/<repo> --search "<keywords>" --state open
+```
+
+- **A matching open issue exists** — use it; note its number for step 4 and the PR.
+- **Nothing matches** — create one first, using the closest-fitting template in
+  [.github/ISSUE_TEMPLATE/](../.github/ISSUE_TEMPLATE/) (`gh issue create` also works directly
+  with `--title`/`--body` when a task doesn't cleanly fit a template):
+
+  ```bash
+  gh issue create -R <owner>/<repo> --title "..." --body "..."
+  ```
+
+This applies even to work you were just asked to do directly in conversation — the issue is
+what makes the *why* discoverable independent of the commit history or a chat transcript, and
+gives step 1 above ("restate the request") something durable to restate *into*, not just an
+ephemeral instruction. Skipping this because the task "is obviously small" is exactly the case
+this step exists to catch — see [AGENTS.md §15](../AGENTS.md#15-if-you-are-still-unsure)'s
+general principle of not silently deciding something doesn't need the process.
 
 ### 1. Sync with the default branch
 
@@ -81,6 +109,10 @@ intended for this repo — and never run `git config` to change identity globall
 override to the individual `git commit` invocation instead (e.g.
 `git -c user.name="..." -c user.email="..." commit`).
 
+Reference the issue from step 0 in at least one commit's footer (`Refs #N`, or `Closes #N` on
+the commit that actually resolves it) — the [.gitmessage](../.gitmessage) footer section shows
+the exact form.
+
 ### 4. Push the branch and open a PR
 
 ```bash
@@ -88,14 +120,18 @@ git push -u origin <branch-name>
 gh pr create --fill
 ```
 
-Never push a feature branch's commits directly to `main`. A PR from a non-contributor pauses in
-CI for maintainer approval per [docs/development/ci.md](../docs/development/ci.md) — that is
-expected, not a failure to fix.
+Then link the issue from step 0 in the PR body if it isn't already covered by a commit footer
+GitHub picked up (`Closes #N` auto-closes it on merge; use `Refs #N` if the PR doesn't fully
+resolve it). Never push a feature branch's commits directly to `main`. A PR from a
+non-contributor pauses in CI for maintainer approval per
+[docs/development/ci.md](../docs/development/ci.md) — that is expected, not a failure to fix.
 
 ## Self-Review Checklist
 
 Before opening a PR, confirm each of these — don't just assume they hold:
 
+- [ ] An open issue exists for this work and is referenced (`Refs #N`/`Closes #N`) in a commit
+      or the PR body — created before the first commit, not added after the fact.
 - [ ] Work happened on a branch cut from the current tip of `main`, not on `main` itself and not
       stacked on a stale or unrelated branch.
 - [ ] Every changed file is relevant to the stated request; nothing was touched "while I was in

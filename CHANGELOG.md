@@ -80,6 +80,15 @@ README.
 - [ADR 0002](adr/0002-reference-implementation-language-go.md): the reference implementation
   (`implementations/reference/`) will be written in Go, unblocking implementation work per
   [implementations/README.md](implementations/README.md).
+- A new required step in `.github/CONTRIBUTING_AGENT.md`'s branching/commit workflow: find or
+  create an open issue *before* the first commit, and reference it (`Refs #N`/`Closes #N`) in a
+  commit footer or the PR body. `.gitmessage`'s footer section reflects this as required, not
+  an optional example — and its stale reference to the removed `.claude/skills/` path (missed
+  when that directory was deleted, since `make docs`'s link checker only scans `*.md` files) is
+  fixed to point at `.github/CONTRIBUTING_AGENT.md`. Opened retroactively as
+  [#7](https://github.com/mid-night-codes/bongopay/issues/7), with
+  [#8](https://github.com/mid-night-codes/bongopay/issues/8) opened to bring the then-already-open
+  PR #6 into compliance.
 - `implementations/reference/internal/payment`: the canonical domain types from
   `specs/payments/payment-contract.md` and the state machine from
   `specs/state-machines/payment-lifecycle.md`, with exhaustive tests over every `(from, to)`

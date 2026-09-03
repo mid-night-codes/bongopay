@@ -35,7 +35,10 @@ Merge
 
 1. **Find or create an issue.** Use the templates in
    [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/). For anything touching a canonical
-   contract (specs/ or contracts/), expect a discussion before implementation starts.
+   contract (specs/ or contracts/), expect a discussion before implementation starts. This is
+   not optional — no commit should exist without an open issue behind it; see
+   [.github/CONTRIBUTING_AGENT.md](.github/CONTRIBUTING_AGENT.md#0-find-or-create-an-open-issue)
+   for the exact `gh` commands.
 2. **Discuss scope** in the issue, especially if the change might need an ADR or RFC (see
    [AGENTS.md §8](AGENTS.md#8-when-adrs-and-rfcs-are-required), which applies to humans too).
 3. **Fork the repository** (or branch directly, for maintainers) and create a branch — always
