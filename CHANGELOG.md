@@ -117,6 +117,9 @@ README.
   idempotent replay rather than re-driving an already-progressed payment through the state
   machine a second time. `TIMEOUT`/`DUPLICATE_CALLBACK`/`OUT_OF_ORDER`/`INVALID_SIGNATURE` are
   deferred — they need delay/callback-timing machinery this increment doesn't build.
+- Status badges on the root `README.md`: CI and commit-message-lint workflow status, Go Report
+  Card, the `go.mod`-derived Go version, and license — no npm/PyPI-style package version badge
+  yet since nothing is published to a package registry.
 
 - A "Stacked PRs" section in `.github/CONTRIBUTING_AGENT.md` covering when a task genuinely
   depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking
