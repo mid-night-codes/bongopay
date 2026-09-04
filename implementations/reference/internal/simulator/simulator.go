@@ -40,15 +40,10 @@ func New(service *payment.Service) *Simulator {
 //
 // The scenario is resolved *before* anything is created, so an unknown scenario name or a
 // PaymentRequest targeting the wrong provider never leaves behind an orphan CREATED Payment.
-//
-// Known limitation: two concurrent Initiate calls for the same brand-new IdempotencyKey can
-// both observe a freshly-CREATED Payment from Service.Create before either has applied a
-// transition, and then race to drive it forward. payment.Service.ApplyTransition's own
-// serialization guarantees no invalid transition or duplicate state is ever stored, but one of
-// the two Initiate calls in that race can receive a *payment.TransitionError instead of the
-// final outcome. Sequential replay (the case specs/payments/payment-contract.md's Idempotency
-// section actually describes) is handled correctly; closing the concurrent-Initiate race is
-// left for a follow-up.
+// The create-and-drive sequence itself runs under payment.Service.CreateAndAdvance's single
+// lock acquisition, so concurrent Initiate calls for the same brand-new IdempotencyKey cannot
+// interleave mid-sequence: whichever starts first runs to completion (or a genuine replay sees
+// that completed result) before any other caller for that key can observe or advance it.
 func (s *Simulator) Initiate(req payment.PaymentRequest) (payment.PaymentResult, error) {
 	if req.Provider.ID != ProviderID {
 		return payment.PaymentResult{}, ErrWrongProvider
@@ -57,22 +52,6 @@ func (s *Simulator) Initiate(req payment.PaymentRequest) (payment.PaymentResult,
 	scenario, err := s.resolveScenario(req)
 	if err != nil {
 		return payment.PaymentResult{}, err
-	}
-
-	p, err := s.service.Create(req)
-	if err != nil {
-		return payment.PaymentResult{}, fmt.Errorf("simulator: creating payment: %w", err)
-	}
-
-	if p.Status != payment.StatusCreated {
-		// Idempotent replay of a payment that has already progressed — return it as-is
-		// rather than re-driving the state machine against it.
-		return payment.PaymentResult{Payment: p}, nil
-	}
-
-	p, err = s.service.ApplyTransition(p.ID, payment.StatusPending)
-	if err != nil {
-		return payment.PaymentResult{}, fmt.Errorf("simulator: applying PENDING: %w", err)
 	}
 
 	var final payment.PaymentStatus
@@ -87,9 +66,9 @@ func (s *Simulator) Initiate(req payment.PaymentRequest) (payment.PaymentResult,
 		return payment.PaymentResult{}, fmt.Errorf("simulator: outcome %q has no implemented behavior", scenario.Outcome)
 	}
 
-	p, err = s.service.ApplyTransition(p.ID, final)
+	p, err := s.service.CreateAndAdvance(req, []payment.PaymentStatus{payment.StatusPending, final})
 	if err != nil {
-		return payment.PaymentResult{}, fmt.Errorf("simulator: applying %s: %w", final, err)
+		return payment.PaymentResult{}, fmt.Errorf("simulator: initiating payment: %w", err)
 	}
 
 	return payment.PaymentResult{Payment: p}, nil
