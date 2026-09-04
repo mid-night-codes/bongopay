@@ -23,10 +23,23 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   transition applies normally, and a genuinely conflicting update (e.g. `FAILED` claimed for an
   already-`SUCCESS` payment) returns a `*TransitionError` without mutating anything.
 
-Not yet implemented: the simulator, webhook handling, and the REST contract — see
-[ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors (`ErrMissingIdempotencyKey`,
-`ErrPaymentNotFound`, `TransitionError`) are provisional and package-local, not the canonical
+- `internal/simulator/` — the `SIMULATOR` provider from
+  [specs/scenarios/scenario-format.md](../../specs/scenarios/scenario-format.md).
+  `Simulator.Initiate` drives `payment.Service` through
+  `CREATED → PENDING → SUCCESS|FAILED`. Only the `success` and `failure` scenarios are
+  implemented — `TIMEOUT`, `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and `INVALID_SIGNATURE` need
+  real delay/callback-timing machinery this increment doesn't build yet. A request with an
+  unknown scenario or the wrong `Provider.ID` is rejected before any `Payment` is created.
+
+Not yet implemented: the four deferred scenario outcomes above, webhook handling, and the REST
+contract — see [ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors
+(`ErrMissingIdempotencyKey`, `ErrPaymentNotFound`, `TransitionError`) and `simulator`'s
+(`ErrWrongProvider`, `ErrUnknownScenario`) are provisional and package-local, not the canonical
 error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
+
+**Known limitation:** two concurrent `Initiate` calls for the same brand-new `IdempotencyKey`
+can race — see the doc comment on `Simulator.Initiate` for why, and why sequential replay (the
+case the spec actually describes) is unaffected.
 
 `internal/` is deliberate: this package is not meant to be imported by `adapters/` or `sdks/` —
 per [ARCHITECTURE.md §8](../../ARCHITECTURE.md#8-reference-implementation-boundary), the

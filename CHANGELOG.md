@@ -110,6 +110,13 @@ README.
   scenario format (`Scenario`, `Outcome`'s six modes, how each maps onto the canonical state
   machine, and how `providerOptions.simulator.scenario` selects one), unblocking simulator
   implementation work.
+- `implementations/reference/internal/simulator`: the `SIMULATOR` provider implementing the
+  `success` and `failure` scenarios from `specs/scenarios/scenario-format.md`, driving
+  `payment.Service` through `CREATED → PENDING → SUCCESS|FAILED`. Rejects an unknown scenario
+  or the wrong `Provider.ID` before creating any `Payment`, and correctly no-ops on sequential
+  idempotent replay rather than re-driving an already-progressed payment through the state
+  machine a second time. `TIMEOUT`/`DUPLICATE_CALLBACK`/`OUT_OF_ORDER`/`INVALID_SIGNATURE` are
+  deferred — they need delay/callback-timing machinery this increment doesn't build.
 
 - A "Stacked PRs" section in `.github/CONTRIBUTING_AGENT.md` covering when a task genuinely
   depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking
