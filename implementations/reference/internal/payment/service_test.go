@@ -121,3 +121,38 @@ func TestCreate_ConcurrentSameKey_CreatesExactlyOnePayment(t *testing.T) {
 		t.Errorf("store's payment ID = %q, want %q", p.ID, first)
 	}
 }
+
+func TestCreateAndAdvance_ConcurrentSameKey_NoTransitionErrors(t *testing.T) {
+	svc, _ := newTestService(t)
+	path := []PaymentStatus{StatusPending, StatusSuccess}
+
+	const attempts = 50
+	var wg sync.WaitGroup
+	results := make([]Payment, attempts)
+	errs := make([]error, attempts)
+
+	for i := 0; i < attempts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			results[i], errs[i] = svc.CreateAndAdvance(testRequest("idem-advance-race"), path)
+		}(i)
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("attempt %d: CreateAndAdvance() error = %v, want nil", i, err)
+		}
+	}
+
+	first := results[0]
+	for i, p := range results {
+		if p.ID != first.ID {
+			t.Errorf("attempt %d returned ID %q, want %q", i, p.ID, first.ID)
+		}
+		if p.Status != StatusSuccess {
+			t.Errorf("attempt %d Status = %s, want %s", i, p.Status, StatusSuccess)
+		}
+	}
+}

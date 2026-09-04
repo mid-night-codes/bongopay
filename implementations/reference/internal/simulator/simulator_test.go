@@ -3,6 +3,7 @@ package simulator
 import (
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/payment"
@@ -118,5 +119,44 @@ func TestInitiate_SequentialIdempotentReplay(t *testing.T) {
 	}
 	if !second.Payment.UpdatedAt.Equal(first.Payment.UpdatedAt) {
 		t.Errorf("replay re-drove the state machine: UpdatedAt changed from %v to %v", first.Payment.UpdatedAt, second.Payment.UpdatedAt)
+	}
+}
+
+// TestInitiate_ConcurrentSameKey_NoTransitionErrors guards against the race documented on an
+// earlier version of Initiate: concurrent calls for the same brand-new IdempotencyKey used to
+// be able to interleave between separate Service.Create/ApplyTransition calls and produce a
+// *payment.TransitionError instead of the final outcome. Initiate now delegates the whole
+// sequence to Service.CreateAndAdvance under one lock acquisition, closing that race.
+func TestInitiate_ConcurrentSameKey_NoTransitionErrors(t *testing.T) {
+	sim, _ := newTestSimulator()
+
+	const attempts = 50
+	var wg sync.WaitGroup
+	results := make([]payment.PaymentResult, attempts)
+	errs := make([]error, attempts)
+
+	for i := 0; i < attempts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			results[i], errs[i] = sim.Initiate(requestWithScenario("idem-concurrent", "success"))
+		}(i)
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("attempt %d: Initiate() error = %v, want nil", i, err)
+		}
+	}
+
+	first := results[0].Payment
+	for i, r := range results {
+		if r.Payment.ID != first.ID {
+			t.Errorf("attempt %d returned ID %q, want %q", i, r.Payment.ID, first.ID)
+		}
+		if r.Payment.Status != payment.StatusSuccess {
+			t.Errorf("attempt %d Status = %s, want %s", i, r.Payment.Status, payment.StatusSuccess)
+		}
 	}
 }

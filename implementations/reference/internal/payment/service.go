@@ -92,12 +92,18 @@ func NewService(store Store, opts ...ServiceOption) *Service {
 // a new one. The check-then-create sequence is serialized per Service instance so concurrent
 // calls with the same IdempotencyKey cannot race into two different Payments.
 func (s *Service) Create(req PaymentRequest) (Payment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.createLocked(req)
+}
+
+// createLocked is Create's body, callable by other Service methods that already hold s.mu —
+// see CreateAndAdvance.
+func (s *Service) createLocked(req PaymentRequest) (Payment, error) {
 	if req.IdempotencyKey == "" {
 		return Payment{}, ErrMissingIdempotencyKey
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if existing, ok := s.store.FindByIdempotencyKey(req.IdempotencyKey); ok {
 		return existing, nil
@@ -139,6 +145,12 @@ func (s *Service) ApplyTransition(id string, to PaymentStatus) (Payment, error) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.applyTransitionLocked(id, to)
+}
+
+// applyTransitionLocked is ApplyTransition's body, callable by other Service methods that
+// already hold s.mu — see CreateAndAdvance.
+func (s *Service) applyTransitionLocked(id string, to PaymentStatus) (Payment, error) {
 	p, ok := s.store.FindByID(id)
 	if !ok {
 		return Payment{}, ErrPaymentNotFound
@@ -157,6 +169,47 @@ func (s *Service) ApplyTransition(id string, to PaymentStatus) (Payment, error) 
 
 	if err := s.store.Save(p); err != nil {
 		return Payment{}, fmt.Errorf("payment: saving transition: %w", err)
+	}
+
+	return p, nil
+}
+
+// CreateAndAdvance creates (or looks up, per Create's idempotency rule) a payment and, only if
+// it was freshly created by this call, applies each status in path in order — all under a
+// single lock acquisition.
+//
+// This exists because Create followed by separate ApplyTransition calls has a race: another
+// goroutine's Create-replay can observe the payment between those calls, at a status that then
+// makes a *later* step invalid (e.g. it already reached SUCCESS by the time this goroutine
+// tries to apply PENDING). Doing the whole sequence under one lock makes it atomic with respect
+// to every other Service call — whichever caller's sequence starts first for a given
+// IdempotencyKey runs to completion before any other caller for that same key can observe or
+// advance it, so a concurrent replay always sees either the pre-creation state (and becomes the
+// one to drive it) or the fully-applied final state (and simply returns it) — never something
+// in between.
+//
+// If the payment already existed (idempotent replay) or path is empty, this behaves exactly
+// like Create/is a lookup — path is not applied.
+func (s *Service) CreateAndAdvance(req PaymentRequest, path []PaymentStatus) (Payment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	p, err := s.createLocked(req)
+	if err != nil {
+		return Payment{}, err
+	}
+
+	if p.Status != StatusCreated {
+		// Idempotent replay of a payment already progressed by another call — return it
+		// as-is rather than re-driving transitions against it.
+		return p, nil
+	}
+
+	for _, to := range path {
+		p, err = s.applyTransitionLocked(p.ID, to)
+		if err != nil {
+			return Payment{}, err
+		}
 	}
 
 	return p, nil

@@ -126,6 +126,17 @@ README.
   footgun that introduces, and how to keep stack depth/rebasing manageable (missed logging this
   one when it merged — noting it now rather than leaving the record incomplete).
 
+### Fixed (Phase 1)
+
+- Closed the concurrent-`Initiate` race flagged as a known limitation when the simulator
+  shipped: two `Initiate` calls for the same brand-new `IdempotencyKey` could interleave
+  between separate `Service.Create`/`ApplyTransition` calls, so one could receive a
+  `*TransitionError` instead of the final outcome if the other had already finished. Added
+  `Service.CreateAndAdvance(req, path)`, performing create-or-lookup and every transition in
+  `path` under one lock acquisition (refactoring `Create`/`ApplyTransition` into
+  lock-then-call-unlocked-helper pairs); `Simulator.Initiate` now uses it instead of three
+  separate `Service` calls. Verified with 50-goroutine `-race`-clean tests in both packages.
+
 ### Changed
 
 - `scripts/test.sh` (`make test`) now actually dispatches to `go test ./...` for every

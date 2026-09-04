@@ -37,9 +37,11 @@ contract — see [ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors
 (`ErrWrongProvider`, `ErrUnknownScenario`) are provisional and package-local, not the canonical
 error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
 
-**Known limitation:** two concurrent `Initiate` calls for the same brand-new `IdempotencyKey`
-can race — see the doc comment on `Simulator.Initiate` for why, and why sequential replay (the
-case the spec actually describes) is unaffected.
+`Service.CreateAndAdvance` performs create-or-lookup plus every subsequent transition under a
+single lock acquisition, so concurrent `Simulator.Initiate` calls for the same brand-new
+`IdempotencyKey` can no longer interleave mid-sequence (closing the race an earlier version of
+this document flagged as a known limitation — see `-race`-clean concurrency tests in both
+packages).
 
 `internal/` is deliberate: this package is not meant to be imported by `adapters/` or `sdks/` —
 per [ARCHITECTURE.md §8](../../ARCHITECTURE.md#8-reference-implementation-boundary), the
