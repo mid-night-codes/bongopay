@@ -1,5 +1,11 @@
 # BongoPay
 
+[![CI](https://github.com/mid-night-codes/bongopay/actions/workflows/ci.yml/badge.svg)](https://github.com/mid-night-codes/bongopay/actions/workflows/ci.yml)
+[![Commit messages](https://github.com/mid-night-codes/bongopay/actions/workflows/commitlint.yml/badge.svg)](https://github.com/mid-night-codes/bongopay/actions/workflows/commitlint.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mid-night-codes/bongopay/implementations/reference)](https://goreportcard.com/report/github.com/mid-night-codes/bongopay/implementations/reference)
+[![Go version](https://img.shields.io/github/go-mod/go-version/mid-night-codes/bongopay?filename=implementations%2Freference%2Fgo.mod&label=go)](implementations/reference/go.mod)
+[![License](https://img.shields.io/github/license/mid-night-codes/bongopay)](LICENSE)
+
 **A language-agnostic payment orchestration and simulation platform.**
 
 BongoPay defines a common, provider-neutral contract for initiating payments, tracking their
