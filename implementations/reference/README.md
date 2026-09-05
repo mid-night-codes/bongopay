@@ -25,23 +25,34 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
 
 - `internal/simulator/` — the `SIMULATOR` provider from
   [specs/scenarios/scenario-format.md](../../specs/scenarios/scenario-format.md).
-  `Simulator.Initiate` drives `payment.Service` through
-  `CREATED → PENDING → SUCCESS|FAILED`. Only the `success` and `failure` scenarios are
-  implemented — `TIMEOUT`, `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and `INVALID_SIGNATURE` need
-  real delay/callback-timing machinery this increment doesn't build yet. A request with an
-  unknown scenario or the wrong `Provider.ID` is rejected before any `Payment` is created.
+  `Simulator.Initiate` drives `payment.Service` through `CREATED → PENDING → SUCCESS|FAILED`
+  for the `success`/`failure` scenarios, via `Service.CreateAndAdvance`, which performs
+  create-or-lookup plus every transition under a single lock acquisition so concurrent
+  `Initiate` calls for the same brand-new `IdempotencyKey` can't interleave mid-sequence. A
+  request with an unknown scenario or the wrong `Provider.ID` is rejected before any `Payment`
+  is created.
+- `internal/simulator/callback.go` — `specs/providers/adapter-contract.md`'s `parseCallback`
+  and `verifyCallback` capabilities: `Callback`, `ParseCallback`, and a `CallbackVerifier` doing
+  HMAC-SHA256 over the raw callback body (a simulator-specific signing scheme for exercising
+  verification *behavior* — not any real provider's actual scheme, which is adapter-specific).
+  `Simulator.HandleCallback` verifies before ever calling `Service.ApplyTransition`, per
+  [ARCHITECTURE.md §12](../../ARCHITECTURE.md#12-security-boundaries). Reusing
+  `ApplyTransition`'s idempotency semantics through this same path is what implements
+  `scenario-format.md`'s `DUPLICATE_CALLBACK` (a repeat is a no-op) and `OUT_OF_ORDER` (a stale
+  conflicting claim is rejected, not silently applied) outcomes, plus `INVALID_SIGNATURE` (a
+  wrong signature or a tampered body is rejected before any mutation). `Simulator.Initiate`
+  itself does not yet route through `HandleCallback` — it's still synchronous end-to-end for
+  `success`/`failure`; whether/how to make it callback-driven is an open design question for a
+  later increment.
 
-Not yet implemented: the four deferred scenario outcomes above, webhook handling, and the REST
-contract — see [ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors
-(`ErrMissingIdempotencyKey`, `ErrPaymentNotFound`, `TransitionError`) and `simulator`'s
-(`ErrWrongProvider`, `ErrUnknownScenario`) are provisional and package-local, not the canonical
-error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
-
-`Service.CreateAndAdvance` performs create-or-lookup plus every subsequent transition under a
-single lock acquisition, so concurrent `Simulator.Initiate` calls for the same brand-new
-`IdempotencyKey` can no longer interleave mid-sequence (closing the race an earlier version of
-this document flagged as a known limitation — see `-race`-clean concurrency tests in both
-packages).
+Not yet implemented: `TIMEOUT` (needs real delay machinery), wiring the `DUPLICATE_CALLBACK`/
+`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors above into `Initiate`'s scenario selection (they're
+only reachable via `HandleCallback` directly today), and the REST contract — see
+[ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors (`ErrMissingIdempotencyKey`,
+`ErrPaymentNotFound`, `TransitionError`) and `simulator`'s (`ErrWrongProvider`,
+`ErrUnknownScenario`, `ErrInvalidCallbackSignature`) are provisional and package-local, not the
+canonical error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still
+`TODO(ADR)`.
 
 `internal/` is deliberate: this package is not meant to be imported by `adapters/` or `sdks/` —
 per [ARCHITECTURE.md §8](../../ARCHITECTURE.md#8-reference-implementation-boundary), the
