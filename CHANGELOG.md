@@ -134,6 +134,13 @@ README.
   depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking
   footgun that introduces, and how to keep stack depth/rebasing manageable (missed logging this
   one when it merged — noting it now rather than leaving the record incomplete).
+- `contracts/openapi/bongopay.yaml`: a Draft v0.1 REST contract (`POST /payments`,
+  `GET /payments/{id}`) matching `internal/payment/types.go` exactly, carrying
+  `specs/payments/payment-contract.md`'s open `TODO(spec)` items forward rather than blocking on
+  them — correcting `contracts/openapi/README.md`'s earlier, inconsistent claim that the REST
+  shape needed those items resolved first. No callback-delivery endpoint (that's
+  provider-specific, not canonical) and no security scheme (undecided, explicitly flagged, not
+  silently absent).
 
 ### Fixed (Phase 1)
 
