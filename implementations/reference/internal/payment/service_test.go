@@ -63,6 +63,32 @@ func TestCreate_MissingIdempotencyKey(t *testing.T) {
 	}
 }
 
+func TestGet_Found(t *testing.T) {
+	svc, _ := newTestService(t)
+
+	created, err := svc.Create(testRequest("idem-1"))
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	got, err := svc.Get(created.ID)
+	if err != nil {
+		t.Fatalf("Get() error = %v, want nil", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("Get() ID = %q, want %q", got.ID, created.ID)
+	}
+}
+
+func TestGet_NotFound(t *testing.T) {
+	svc, _ := newTestService(t)
+
+	_, err := svc.Get("does-not-exist")
+	if !errors.Is(err, ErrPaymentNotFound) {
+		t.Fatalf("Get() error = %v, want ErrPaymentNotFound", err)
+	}
+}
+
 func TestCreate_IdempotentReplay(t *testing.T) {
 	svc, store := newTestService(t)
 

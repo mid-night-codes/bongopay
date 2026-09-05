@@ -214,3 +214,15 @@ func (s *Service) CreateAndAdvance(req PaymentRequest, path []PaymentStatus) (Pa
 
 	return p, nil
 }
+
+// Get returns the Payment with the given canonical ID, or ErrPaymentNotFound if none exists.
+func (s *Service) Get(id string) (Payment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	p, ok := s.store.FindByID(id)
+	if !ok {
+		return Payment{}, ErrPaymentNotFound
+	}
+	return p, nil
+}
