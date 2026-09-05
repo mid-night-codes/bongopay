@@ -141,6 +141,12 @@ README.
   shape needed those items resolved first. No callback-delivery endpoint (that's
   provider-specific, not canonical) and no security scheme (undecided, explicitly flagged, not
   silently absent).
+- `implementations/reference/internal/httpapi` + `cmd/server`: an HTTP server implementing
+  `contracts/openapi/bongopay.yaml` (`POST /payments`, `GET /payments/{id}`) via stdlib
+  `net/http` pattern routing — no router dependency. `Service.Get(id)` added for the read path.
+  Package-local errors map to HTTP status codes per the contract (400/404/409/500). Verified
+  with `httptest`-based tests and a manual `curl` smoke test against the actually-running
+  binary, not just in-process handler calls.
 
 ### Fixed (Phase 1)
 

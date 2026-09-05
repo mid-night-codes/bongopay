@@ -45,14 +45,33 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   `success`/`failure`; whether/how to make it callback-driven is an open design question for a
   later increment.
 
-Not yet implemented: `TIMEOUT` (needs real delay machinery), wiring the `DUPLICATE_CALLBACK`/
-`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors above into `Initiate`'s scenario selection (they're
-only reachable via `HandleCallback` directly today), and the REST contract — see
-[ROADMAP.md](../../ROADMAP.md) Phase 1. `Service`'s errors (`ErrMissingIdempotencyKey`,
-`ErrPaymentNotFound`, `TransitionError`) and `simulator`'s (`ErrWrongProvider`,
-`ErrUnknownScenario`, `ErrInvalidCallbackSignature`) are provisional and package-local, not the
-canonical error taxonomy — see [specs/errors/README.md](../../specs/errors/README.md), still
-`TODO(ADR)`.
+- `internal/httpapi/` + `cmd/server/` — an HTTP server implementing
+  [contracts/openapi/bongopay.yaml](../../contracts/openapi/bongopay.yaml)'s `POST /payments`
+  and `GET /payments/{id}` against stdlib `net/http` pattern routing (Go 1.22+ — no router
+  dependency). `cmd/server` wires an `InMemoryStore` → `Service` → `Simulator` → `httpapi.Server`
+  and listens on `:8080` by default. Every `PaymentRequest` reaches the simulator, since there
+  are no adapters yet — `Simulator.Initiate`'s own `Provider.ID` check is what rejects anything
+  else. Package-local errors map onto HTTP status codes per the contract's documented responses
+  (missing idempotency key / wrong provider / unknown scenario → 400, not found → 404, a
+  transition conflict → 409, anything else → 500, with the message withheld to avoid leaking
+  internals). Run it and try it:
+
+  ```bash
+  cd implementations/reference
+  go run ./cmd/server &
+  curl -X POST localhost:8080/payments \
+    -d '{"provider":{"id":"SIMULATOR"},"amount":{"value":5000,"currency":{"code":"TZS"}},"customerReference":{},"idempotencyKey":"demo-1"}'
+  ```
+
+Not yet implemented: `TIMEOUT` (needs real delay machinery) and wiring the `DUPLICATE_CALLBACK`/
+`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors into `Initiate`'s scenario selection (they're only
+reachable via `HandleCallback` directly today, and there's no HTTP route for callback delivery
+either — see [contracts/openapi/README.md](../../contracts/openapi/README.md) on why that's
+deliberately not part of the canonical contract). See [ROADMAP.md](../../ROADMAP.md) Phase 1.
+`Service`'s errors (`ErrMissingIdempotencyKey`, `ErrPaymentNotFound`, `TransitionError`) and
+`simulator`'s (`ErrWrongProvider`, `ErrUnknownScenario`, `ErrInvalidCallbackSignature`) are
+provisional and package-local, not the canonical error taxonomy — see
+[specs/errors/README.md](../../specs/errors/README.md), still `TODO(ADR)`.
 
 `internal/` is deliberate: this package is not meant to be imported by `adapters/` or `sdks/` —
 per [ARCHITECTURE.md §8](../../ARCHITECTURE.md#8-reference-implementation-boundary), the
