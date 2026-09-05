@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: BongoPay API
+  version: "0.1.0"
+  description: >
+    Draft v0.1 REST contract derived from specs/payments/payment-contract.md. Field lists here
+    are illustrative and non-exhaustive, propagating that document's own open TODO(spec)/
+    TODO(RFC) items forward rather than waiting for them to resolve first — see
+    contracts/openapi/README.md. Do not treat omission of an operation or field as a decision.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: >
+      Local reference implementation (implementations/reference/), once its HTTP server
+      exists — no server implements this contract yet.
+
+# TODO(spec): authentication/authorization is undecided and intentionally absent from this
+# document. Do not read the lack of a `security` scheme as a decision that this API is meant
+# to be unauthenticated — it means the question hasn't been designed yet.
+
+paths:
+  /payments:
+    post:
+      operationId: initiatePayment
+      summary: Initiate a payment
+      description: >
+        Per specs/payments/payment-contract.md "Idempotency": a request whose idempotencyKey
+        has already been seen returns the existing logical Payment rather than creating a new
+        one. TODO(spec): whether that idempotent-replay case should be distinguishable from a
+        first-time creation via status code (both currently return 200) is open.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+      responses:
+        "200":
+          description: >
+            The Payment now exists — either just created, or (idempotent replay) already did.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResult"
+        "400":
+          description: The request is malformed or fails validation (e.g. missing idempotencyKey).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: An unexpected internal error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /payments/{id}:
+    get:
+      operationId: getPayment
+      summary: Get a payment by its canonical ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Payment.id, as returned from initiatePayment.
+      responses:
+        "200":
+          description: The Payment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "404":
+          description: No Payment exists with this ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Money:
+      type: object
+      description: >
+        An amount in the currency's minor unit (e.g. cents). Never a float — see
+        specs/payments/README.md.
+      required: [value, currency]
+      properties:
+        value:
+          type: integer
+          format: int64
+        currency:
+          $ref: "#/components/schemas/Currency"
+
+    Currency:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: ISO 4217 alphabetic code, e.g. "TZS", "KES", "USD".
+
+    Metadata:
+      type: object
+      additionalProperties:
+        type: string
+      description: >
+        Free-form, opaque key/value pairs supplied by the caller and echoed back unmodified.
+        MUST NOT be interpreted by core or by adapters.
+
+    ProviderOptions:
+      type: object
+      additionalProperties:
+        type: object
+      description: >
+        Namespaced, provider-specific data (providerOptions.<provider> per
+        specs/providers/extensions.md). Each namespace's contents are opaque to core — this
+        contract does not, and must not, validate their shape.
+
+    Provider:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          description: e.g. "MPESA", "AIRTEL_MONEY", or "SIMULATOR" (always valid).
+
+    PaymentMethodType:
+      type: string
+      description: >
+        TODO(spec): specs/payments/payment-contract.md marks this enum as not yet finalized —
+        these values are illustrative, not exhaustive.
+      enum: [MOBILE_MONEY, CARD, BANK_TRANSFER]
+
+    PaymentMethod:
+      type: object
+      required: [type]
+      properties:
+        type:
+          $ref: "#/components/schemas/PaymentMethodType"
+
+    CustomerReference:
+      type: object
+      description: >
+        TODO(spec): whether exactly one of msisdn/externalId is required, vs. both optional, is
+        still open per specs/payments/payment-contract.md.
+      properties:
+        msisdn:
+          type: string
+        externalId:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+    ProviderReference:
+      type: object
+      required: [provider]
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        providerTransactionId:
+          type: string
+        providerRawStatus:
+          type: string
+          description: >
+            Observability/debugging only — MUST NOT be treated as a canonical PaymentStatus.
+
+    PaymentStatus:
+      type: string
+      description: See specs/state-machines/payment-lifecycle.md for the full state machine.
+      enum:
+        - CREATED
+        - PENDING
+        - SUCCESS
+        - FAILED
+        - EXPIRED
+        - CANCELLED
+        - REVERSAL_PENDING
+        - REVERSED
+        - REFUND_PENDING
+        - REFUNDED
+
+    PaymentRequest:
+      type: object
+      required: [provider, amount, customerReference, idempotencyKey]
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        amount:
+          $ref: "#/components/schemas/Money"
+        customerReference:
+          $ref: "#/components/schemas/CustomerReference"
+        paymentMethod:
+          $ref: "#/components/schemas/PaymentMethod"
+        idempotencyKey:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        providerOptions:
+          $ref: "#/components/schemas/ProviderOptions"
+
+    Payment:
+      type: object
+      required:
+        - id
+        - status
+        - amount
+        - provider
+        - customerReference
+        - idempotencyKey
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        amount:
+          $ref: "#/components/schemas/Money"
+        provider:
+          $ref: "#/components/schemas/Provider"
+        providerReference:
+          $ref: "#/components/schemas/ProviderReference"
+        customerReference:
+          $ref: "#/components/schemas/CustomerReference"
+        idempotencyKey:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        providerOptions:
+          $ref: "#/components/schemas/ProviderOptions"
+
+    PaymentResult:
+      type: object
+      required: [payment]
+      properties:
+        payment:
+          $ref: "#/components/schemas/Payment"
+
+    Error:
+      type: object
+      description: >
+        Provisional, non-canonical error shape — specs/errors/error-model.md (the canonical,
+        transport-agnostic error taxonomy) is still TODO(ADR). Do not treat this as that model;
+        it exists only so this contract's error responses have *some* documented shape today.
+      required: [error]
+      properties:
+        error:
+          type: string
