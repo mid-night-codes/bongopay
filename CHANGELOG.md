@@ -120,6 +120,15 @@ README.
 - Status badges on the root `README.md`: CI and commit-message-lint workflow status, Go Report
   Card, the `go.mod`-derived Go version, and license — no npm/PyPI-style package version badge
   yet since nothing is published to a package registry.
+- `implementations/reference/internal/simulator/callback.go`: `Callback`, `ParseCallback`, and
+  a `CallbackVerifier` (HMAC-SHA256 over the raw body) implementing
+  `specs/providers/adapter-contract.md`'s `parseCallback`/`verifyCallback` capabilities.
+  `Simulator.HandleCallback` verifies before ever calling `Service.ApplyTransition`, per
+  `ARCHITECTURE.md §12`, and reuses `ApplyTransition`'s idempotency semantics to implement
+  `specs/scenarios/scenario-format.md`'s `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and
+  `INVALID_SIGNATURE` outcomes — each covered by a test showing the store is untouched on
+  rejection/no-op. Not yet wired into `Simulator.Initiate`'s scenario selection, which remains
+  synchronous end-to-end for `success`/`failure` only.
 
 - A "Stacked PRs" section in `.github/CONTRIBUTING_AGENT.md` covering when a task genuinely
   depends on another open PR's unmerged branch, the `git checkout -b <remote-ref>` tracking
