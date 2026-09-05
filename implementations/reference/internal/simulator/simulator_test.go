@@ -9,10 +9,10 @@ import (
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/payment"
 )
 
-func newTestSimulator() (*Simulator, *payment.InMemoryStore) {
+func newTestSimulator() (*Simulator, *payment.Service, *payment.InMemoryStore) {
 	store := payment.NewInMemoryStore()
 	svc := payment.NewService(store)
-	return New(svc), store
+	return New(svc), svc, store
 }
 
 func requestWithScenario(idempotencyKey, scenario string) payment.PaymentRequest {
@@ -29,7 +29,7 @@ func requestWithScenario(idempotencyKey, scenario string) payment.PaymentRequest
 }
 
 func TestInitiate_DefaultScenario_Success(t *testing.T) {
-	sim, _ := newTestSimulator()
+	sim, _, _ := newTestSimulator()
 
 	result, err := sim.Initiate(requestWithScenario("idem-1", ""))
 	if err != nil {
@@ -41,7 +41,7 @@ func TestInitiate_DefaultScenario_Success(t *testing.T) {
 }
 
 func TestInitiate_ExplicitSuccessScenario(t *testing.T) {
-	sim, _ := newTestSimulator()
+	sim, _, _ := newTestSimulator()
 
 	result, err := sim.Initiate(requestWithScenario("idem-1", "success"))
 	if err != nil {
@@ -53,7 +53,7 @@ func TestInitiate_ExplicitSuccessScenario(t *testing.T) {
 }
 
 func TestInitiate_FailureScenario(t *testing.T) {
-	sim, _ := newTestSimulator()
+	sim, _, _ := newTestSimulator()
 
 	result, err := sim.Initiate(requestWithScenario("idem-1", "failure"))
 	if err != nil {
@@ -65,7 +65,7 @@ func TestInitiate_FailureScenario(t *testing.T) {
 }
 
 func TestInitiate_UnknownScenario_NoPaymentCreated(t *testing.T) {
-	sim, store := newTestSimulator()
+	sim, _, store := newTestSimulator()
 
 	_, err := sim.Initiate(requestWithScenario("idem-1", "does-not-exist"))
 
@@ -83,7 +83,7 @@ func TestInitiate_UnknownScenario_NoPaymentCreated(t *testing.T) {
 }
 
 func TestInitiate_WrongProvider_NoPaymentCreated(t *testing.T) {
-	sim, store := newTestSimulator()
+	sim, _, store := newTestSimulator()
 
 	req := requestWithScenario("idem-1", "success")
 	req.Provider = payment.Provider{ID: "MPESA"}
@@ -99,7 +99,7 @@ func TestInitiate_WrongProvider_NoPaymentCreated(t *testing.T) {
 }
 
 func TestInitiate_SequentialIdempotentReplay(t *testing.T) {
-	sim, _ := newTestSimulator()
+	sim, _, _ := newTestSimulator()
 
 	first, err := sim.Initiate(requestWithScenario("idem-1", "success"))
 	if err != nil {
@@ -128,7 +128,7 @@ func TestInitiate_SequentialIdempotentReplay(t *testing.T) {
 // *payment.TransitionError instead of the final outcome. Initiate now delegates the whole
 // sequence to Service.CreateAndAdvance under one lock acquisition, closing that race.
 func TestInitiate_ConcurrentSameKey_NoTransitionErrors(t *testing.T) {
-	sim, _ := newTestSimulator()
+	sim, _, _ := newTestSimulator()
 
 	const attempts = 50
 	var wg sync.WaitGroup
