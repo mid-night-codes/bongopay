@@ -37,14 +37,30 @@ type Simulator struct {
 	verifier *CallbackVerifier
 }
 
-// New returns a Simulator backed by service, using DefaultRegistry for scenario resolution and
-// a fresh, random callback-signing secret (see CallbackVerifier).
-func New(service *payment.Service) *Simulator {
-	return &Simulator{
+// Option configures optional Simulator behavior, primarily so a caller can supply a known
+// callback-signing secret instead of New's default random one — see WithSecret.
+type Option func(*Simulator)
+
+// WithSecret sets the callback-signing secret (see CallbackVerifier) instead of a random one.
+// Useful for a long-running process (e.g. cmd/server) that wants to print its secret once at
+// startup so it can be reproduced externally (openssl, a test script) to sign a callback body
+// for POST /simulator/callbacks.
+func WithSecret(secret []byte) Option {
+	return func(s *Simulator) { s.verifier = NewCallbackVerifier(secret) }
+}
+
+// New returns a Simulator backed by service, using DefaultRegistry for scenario resolution and,
+// unless overridden with WithSecret, a fresh, random callback-signing secret.
+func New(service *payment.Service, opts ...Option) *Simulator {
+	s := &Simulator{
 		service:  service,
 		registry: DefaultRegistry(),
 		verifier: NewCallbackVerifier(randomSecret()),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Initiate creates (or, for a repeated IdempotencyKey, looks up) a Payment and, for a freshly
