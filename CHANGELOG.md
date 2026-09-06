@@ -147,6 +147,13 @@ README.
   Package-local errors map to HTTP status codes per the contract (400/404/409/500). Verified
   with `httptest`-based tests and a manual `curl` smoke test against the actually-running
   binary, not just in-process handler calls.
+- `POST /simulator/callbacks` — deliberately namespaced outside `contracts/openapi/bongopay.yaml`
+  — exposes `Simulator.HandleCallback` over HTTP, reading a signature from the `X-Signature`
+  header. `simulator.New` gained a `WithSecret` option and `cmd/server` a `-callback-secret`
+  flag (random if unset, logged at startup) so the signature is reproducible externally
+  (`openssl dgst -sha256 -hmac`). This is what makes `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and
+  `INVALID_SIGNATURE` demonstrable over real HTTP — verified with both `httptest` and a manual
+  `curl`+`openssl` smoke test against the running binary.
 
 ### Fixed (Phase 1)
 
