@@ -154,6 +154,16 @@ README.
   (`openssl dgst -sha256 -hmac`). This is what makes `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and
   `INVALID_SIGNATURE` demonstrable over real HTTP — verified with both `httptest` and a manual
   `curl`+`openssl` smoke test against the running binary.
+- The `timeout` scenario (the last of the six `specs/scenarios/scenario-format.md` outcomes):
+  `CREATED → PENDING`, wait out `Scenario.Delay` (a `Sleeper`, default `time.Sleep`, injectable
+  via `WithSleeper`), then `EXPIRED` — unless a real callback resolved the payment differently
+  during the wait, in which case that resolution wins rather than `Initiate` erroring or
+  clobbering it back to `EXPIRED`. Zero behavior change for `success`/`failure`, which keep the
+  existing single-lock `CreateAndAdvance` fast path (delay `<= 0`). Caught a real bug while
+  writing the "real callback wins" test: `p, err = s.service.ApplyTransition(...)` was
+  clobbering `p.ID` to `""` on the error path right before the fallback lookup needed it.
+  Verified against the actually-running server too — a real HTTP request with the `timeout`
+  scenario took ~2s and returned `EXPIRED`, matching the registry's configured delay.
 
 ### Fixed (Phase 1)
 
