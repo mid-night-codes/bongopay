@@ -11,11 +11,11 @@ import (
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/simulator"
 )
 
-func newTestServer() *Server {
+func newTestServer() (*Server, *payment.Service, *simulator.Simulator) {
 	store := payment.NewInMemoryStore()
 	svc := payment.NewService(store)
 	sim := simulator.New(svc)
-	return NewServer(svc, sim)
+	return NewServer(svc, sim), svc, sim
 }
 
 func doRequest(t *testing.T, h http.Handler, method, path string, body any) *httptest.ResponseRecorder {
@@ -56,7 +56,7 @@ func validRequest(idempotencyKey string) payment.PaymentRequest {
 }
 
 func TestHandleInitiatePayment_Success(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 
 	rec := doRequest(t, s.Handler(), "POST", "/payments", validRequest("idem-1"))
 	if rec.Code != http.StatusOK {
@@ -73,7 +73,7 @@ func TestHandleInitiatePayment_Success(t *testing.T) {
 }
 
 func TestHandleInitiatePayment_MalformedBody(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 
 	req := httptest.NewRequest("POST", "/payments", bytes.NewReader([]byte("{not json")))
 	rec := httptest.NewRecorder()
@@ -89,7 +89,7 @@ func TestHandleInitiatePayment_MalformedBody(t *testing.T) {
 }
 
 func TestHandleInitiatePayment_MissingIdempotencyKey(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 
 	rec := doRequest(t, s.Handler(), "POST", "/payments", validRequest(""))
 	if rec.Code != http.StatusBadRequest {
@@ -98,7 +98,7 @@ func TestHandleInitiatePayment_MissingIdempotencyKey(t *testing.T) {
 }
 
 func TestHandleInitiatePayment_WrongProvider(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 
 	req := validRequest("idem-1")
 	req.Provider = payment.Provider{ID: "MPESA"}
@@ -110,7 +110,7 @@ func TestHandleInitiatePayment_WrongProvider(t *testing.T) {
 }
 
 func TestHandleGetPayment_NotFound(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 
 	rec := doRequest(t, s.Handler(), "GET", "/payments/does-not-exist", nil)
 	if rec.Code != http.StatusNotFound {
@@ -119,7 +119,7 @@ func TestHandleGetPayment_NotFound(t *testing.T) {
 }
 
 func TestRoundTrip_InitiateThenGet(t *testing.T) {
-	s := newTestServer()
+	s, _, _ := newTestServer()
 	h := s.Handler()
 
 	initiateRec := doRequest(t, h, "POST", "/payments", validRequest("idem-1"))
@@ -139,5 +139,89 @@ func TestRoundTrip_InitiateThenGet(t *testing.T) {
 	}
 	if got.Status != created.Status {
 		t.Errorf("GET returned Status %s, want %s", got.Status, created.Status)
+	}
+}
+
+// seedPending creates a payment and drives it to PENDING directly via svc, as if it had been
+// submitted to a provider and were now awaiting a callback.
+func seedPending(t *testing.T, svc *payment.Service, idempotencyKey string) payment.Payment {
+	t.Helper()
+	p, err := svc.Create(validRequest(idempotencyKey))
+	if err != nil {
+		t.Fatalf("seedPending: Create() error = %v", err)
+	}
+	p, err = svc.ApplyTransition(p.ID, payment.StatusPending)
+	if err != nil {
+		t.Fatalf("seedPending: ApplyTransition(PENDING) error = %v", err)
+	}
+	return p
+}
+
+func doRequestWithSignature(t *testing.T, h http.Handler, body []byte, signature string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest("POST", "/simulator/callbacks", bytes.NewReader(body))
+	if signature != "" {
+		req.Header.Set(SignatureHeader, signature)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestHandleCallback_ValidSignature_AppliesTransition(t *testing.T) {
+	s, svc, sim := newTestServer()
+	p := seedPending(t, svc, "idem-1")
+
+	body, err := json.Marshal(simulator.Callback{PaymentID: p.ID, Status: payment.StatusSuccess})
+	if err != nil {
+		t.Fatalf("marshaling callback: %v", err)
+	}
+	sig := sim.SignCallback(body)
+
+	rec := doRequestWithSignature(t, s.Handler(), body, sig)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body = %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	got := decodeBody[payment.Payment](t, rec)
+	if got.Status != payment.StatusSuccess {
+		t.Errorf("Status = %s, want %s", got.Status, payment.StatusSuccess)
+	}
+}
+
+func TestHandleCallback_InvalidSignature_Rejected(t *testing.T) {
+	s, svc, _ := newTestServer()
+	p := seedPending(t, svc, "idem-1")
+
+	body, err := json.Marshal(simulator.Callback{PaymentID: p.ID, Status: payment.StatusSuccess})
+	if err != nil {
+		t.Fatalf("marshaling callback: %v", err)
+	}
+
+	rec := doRequestWithSignature(t, s.Handler(), body, "not-a-real-signature")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d; body = %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+
+	stored, err := svc.Get(p.ID)
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if stored.Status != payment.StatusPending {
+		t.Errorf("stored Status = %s, want unchanged %s (invalid signature must not mutate)", stored.Status, payment.StatusPending)
+	}
+}
+
+func TestHandleCallback_PaymentNotFound(t *testing.T) {
+	s, _, sim := newTestServer()
+
+	body, err := json.Marshal(simulator.Callback{PaymentID: "does-not-exist", Status: payment.StatusSuccess})
+	if err != nil {
+		t.Fatalf("marshaling callback: %v", err)
+	}
+	sig := sim.SignCallback(body)
+
+	rec := doRequestWithSignature(t, s.Handler(), body, sig)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d; body = %s", rec.Code, http.StatusNotFound, rec.Body.String())
 	}
 }
