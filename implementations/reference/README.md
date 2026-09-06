@@ -63,11 +63,27 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
     -d '{"provider":{"id":"SIMULATOR"},"amount":{"value":5000,"currency":{"code":"TZS"}},"customerReference":{},"idempotencyKey":"demo-1"}'
   ```
 
+  `cmd/server` also exposes `POST /simulator/callbacks` — deliberately namespaced `/simulator/`,
+  not part of `bongopay.yaml`, since each real provider has its own webhook shape (see
+  [contracts/openapi/README.md](../../contracts/openapi/README.md)). This is what makes
+  `DUPLICATE_CALLBACK`, `OUT_OF_ORDER`, and `INVALID_SIGNATURE` demonstrable over real HTTP, not
+  just in Go tests. It reads a signature from the `X-Signature` header, verified against a
+  secret `cmd/server` prints at startup (or accepts via `-callback-secret`, for a reproducible
+  local demo):
+
+  ```bash
+  go run ./cmd/server -callback-secret testsecret123 &
+  # after initiating a payment above and capturing its "id" as $ID:
+  BODY='{"paymentId":"'"$ID"'","status":"SUCCESS"}'
+  SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac testsecret123 | sed 's/^.* //')
+  curl -X POST localhost:8080/simulator/callbacks -H "X-Signature: $SIG" -d "$BODY"
+  ```
+
 Not yet implemented: `TIMEOUT` (needs real delay machinery) and wiring the `DUPLICATE_CALLBACK`/
-`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors into `Initiate`'s scenario selection (they're only
-reachable via `HandleCallback` directly today, and there's no HTTP route for callback delivery
-either — see [contracts/openapi/README.md](../../contracts/openapi/README.md) on why that's
-deliberately not part of the canonical contract). See [ROADMAP.md](../../ROADMAP.md) Phase 1.
+`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors into `Initiate`'s scenario selection (`Initiate`
+itself is still synchronous end-to-end for `success`/`failure`; the callback endpoint above
+exercises the same three behaviors independently, against a payment already at `PENDING`). See
+[ROADMAP.md](../../ROADMAP.md) Phase 1.
 `Service`'s errors (`ErrMissingIdempotencyKey`, `ErrPaymentNotFound`, `TransitionError`) and
 `simulator`'s (`ErrWrongProvider`, `ErrUnknownScenario`, `ErrInvalidCallbackSignature`) are
 provisional and package-local, not the canonical error taxonomy — see

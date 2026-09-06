@@ -6,11 +6,16 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/payment"
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/simulator"
 )
+
+// SignatureHeader is the HTTP header POST /simulator/callbacks reads the callback signature
+// from — see Simulator.SignCallback for how to compute it.
+const SignatureHeader = "X-Signature"
 
 // Server implements contracts/openapi/bongopay.yaml. The only provider it can actually reach
 // today is the simulator — there are no adapters yet (see adapters/README.md) — so every
@@ -26,11 +31,16 @@ func NewServer(service *payment.Service, sim *simulator.Simulator) *Server {
 	return &Server{service: service, simulator: sim}
 }
 
-// Handler returns the http.Handler implementing contracts/openapi/bongopay.yaml's paths.
+// Handler returns the http.Handler implementing contracts/openapi/bongopay.yaml's paths, plus
+// POST /simulator/callbacks — deliberately namespaced /simulator/ since it is reference-impl
+// testing tooling, not part of that canonical contract (see
+// contracts/openapi/README.md on why: each real provider has its own webhook shape, so there is
+// no single canonical wire format to standardize).
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /payments", s.handleInitiatePayment)
 	mux.HandleFunc("GET /payments/{id}", s.handleGetPayment)
+	mux.HandleFunc("POST /simulator/callbacks", s.handleCallback)
 	return mux
 }
 
@@ -62,6 +72,25 @@ func (s *Server) handleGetPayment(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, p)
 }
 
+// handleCallback delivers a simulated asynchronous provider notification — see
+// Simulator.HandleCallback and Simulator.SignCallback (used to compute the SignatureHeader
+// value for a given body). Not part of contracts/openapi/bongopay.yaml — see Handler's comment.
+func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "reading request body: "+err.Error())
+		return
+	}
+
+	p, err := s.simulator.HandleCallback(body, r.Header.Get(SignatureHeader))
+	if err != nil {
+		writeErrFor(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, p)
+}
+
 // errorResponse matches the Error schema in contracts/openapi/bongopay.yaml — a provisional,
 // non-canonical shape, not specs/errors/error-model.md (still unwritten).
 type errorResponse struct {
@@ -75,7 +104,8 @@ type errorResponse struct {
 func writeErrFor(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, payment.ErrMissingIdempotencyKey),
-		errors.Is(err, simulator.ErrWrongProvider):
+		errors.Is(err, simulator.ErrWrongProvider),
+		errors.Is(err, simulator.ErrInvalidCallbackSignature):
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	case errors.Is(err, payment.ErrPaymentNotFound):

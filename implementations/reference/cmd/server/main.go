@@ -7,6 +7,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"log"
 	"net/http"
@@ -18,14 +20,26 @@ import (
 
 func main() {
 	addr := flag.String("addr", ":8080", "address to listen on")
+	callbackSecret := flag.String("callback-secret", "", "HMAC secret for simulator callback signatures (random if empty)")
 	flag.Parse()
+
+	secret := []byte(*callbackSecret)
+	if len(secret) == 0 {
+		var b [32]byte
+		if _, err := rand.Read(b[:]); err != nil {
+			log.Fatalf("generating callback secret: %v", err)
+		}
+		secret = []byte(hex.EncodeToString(b[:]))
+	}
 
 	store := payment.NewInMemoryStore()
 	svc := payment.NewService(store)
-	sim := simulator.New(svc)
+	sim := simulator.New(svc, simulator.WithSecret(secret))
 	server := httpapi.NewServer(svc, sim)
 
 	log.Printf("bongopay reference server listening on %s", *addr)
+	log.Printf("simulator callback-signing secret (POST /simulator/callbacks, header %s): %s",
+		httpapi.SignatureHeader, secret)
 	if err := http.ListenAndServe(*addr, server.Handler()); err != nil {
 		log.Fatal(err)
 	}
