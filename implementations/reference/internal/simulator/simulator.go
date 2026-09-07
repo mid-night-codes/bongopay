@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/mid-night-codes/bongopay/implementations/reference/internal/payment"
 )
@@ -35,10 +36,14 @@ type Simulator struct {
 	service  *payment.Service
 	registry Registry
 	verifier *CallbackVerifier
+	sleep    Sleeper
 }
 
-// Option configures optional Simulator behavior, primarily so a caller can supply a known
-// callback-signing secret instead of New's default random one — see WithSecret.
+// Sleeper pauses for at least d, simulating a Scenario's Delay. Injectable so tests exercising
+// a delayed outcome (e.g. "timeout") don't have to wait through a real delay.
+type Sleeper func(d time.Duration)
+
+// Option configures optional Simulator behavior — see WithSecret and WithSleeper.
 type Option func(*Simulator)
 
 // WithSecret sets the callback-signing secret (see CallbackVerifier) instead of a random one.
@@ -49,13 +54,20 @@ func WithSecret(secret []byte) Option {
 	return func(s *Simulator) { s.verifier = NewCallbackVerifier(secret) }
 }
 
-// New returns a Simulator backed by service, using DefaultRegistry for scenario resolution and,
-// unless overridden with WithSecret, a fresh, random callback-signing secret.
+// WithSleeper overrides how Initiate waits out a delayed scenario's Delay. Default: time.Sleep.
+func WithSleeper(sleep Sleeper) Option {
+	return func(s *Simulator) { s.sleep = sleep }
+}
+
+// New returns a Simulator backed by service, using DefaultRegistry for scenario resolution,
+// time.Sleep for any delayed outcome, and, unless overridden with WithSecret, a fresh, random
+// callback-signing secret.
 func New(service *payment.Service, opts ...Option) *Simulator {
 	s := &Simulator{
 		service:  service,
 		registry: DefaultRegistry(),
 		verifier: NewCallbackVerifier(randomSecret()),
+		sleep:    time.Sleep,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -63,15 +75,39 @@ func New(service *payment.Service, opts ...Option) *Simulator {
 	return s
 }
 
+// finalStatusFor maps an Outcome onto the PaymentStatus Initiate should drive a payment to.
+func finalStatusFor(outcome Outcome) (payment.PaymentStatus, error) {
+	switch outcome {
+	case OutcomeSuccess:
+		return payment.StatusSuccess, nil
+	case OutcomeFailure:
+		return payment.StatusFailed, nil
+	case OutcomeTimeout:
+		return payment.StatusExpired, nil
+	default:
+		// DefaultRegistry never returns DuplicateCallback/OutOfOrder/InvalidSignature
+		// scenarios (those are only reachable via HandleCallback), so this is unreachable
+		// today — guarded explicitly rather than silently falling through.
+		return "", fmt.Errorf("simulator: outcome %q has no implemented behavior", outcome)
+	}
+}
+
 // Initiate creates (or, for a repeated IdempotencyKey, looks up) a Payment and, for a freshly
 // created one, drives it through CREATED -> PENDING -> the scenario's outcome.
 //
 // The scenario is resolved *before* anything is created, so an unknown scenario name or a
 // PaymentRequest targeting the wrong provider never leaves behind an orphan CREATED Payment.
-// The create-and-drive sequence itself runs under payment.Service.CreateAndAdvance's single
-// lock acquisition, so concurrent Initiate calls for the same brand-new IdempotencyKey cannot
-// interleave mid-sequence: whichever starts first runs to completion (or a genuine replay sees
-// that completed result) before any other caller for that key can observe or advance it.
+//
+// A zero-delay scenario (success/failure) runs the create-and-drive sequence under
+// payment.Service.CreateAndAdvance's single lock acquisition, so concurrent Initiate calls for
+// the same brand-new IdempotencyKey cannot interleave mid-sequence.
+//
+// A delayed scenario (timeout) cannot hold that lock for the whole delay — that would
+// serialize every other Initiate/ApplyTransition/HandleCallback call against it. Instead it
+// submits to PENDING, waits out the delay, and then applies the outcome as a second step. A
+// real callback (via HandleCallback) can legitimately resolve the payment differently during
+// that window; that resolution wins — a *payment.TransitionError from the second step is
+// treated as "already resolved by something else," not as Initiate's own failure.
 func (s *Simulator) Initiate(req payment.PaymentRequest) (payment.PaymentResult, error) {
 	if req.Provider.ID != ProviderID {
 		return payment.PaymentResult{}, ErrWrongProvider
@@ -82,22 +118,46 @@ func (s *Simulator) Initiate(req payment.PaymentRequest) (payment.PaymentResult,
 		return payment.PaymentResult{}, err
 	}
 
-	var final payment.PaymentStatus
-	switch scenario.Outcome {
-	case OutcomeSuccess:
-		final = payment.StatusSuccess
-	case OutcomeFailure:
-		final = payment.StatusFailed
-	default:
-		// DefaultRegistry only ever returns Success/Failure scenarios today, so this is
-		// unreachable — guarded explicitly rather than silently falling through.
-		return payment.PaymentResult{}, fmt.Errorf("simulator: outcome %q has no implemented behavior", scenario.Outcome)
+	final, err := finalStatusFor(scenario.Outcome)
+	if err != nil {
+		return payment.PaymentResult{}, err
 	}
 
-	p, err := s.service.CreateAndAdvance(req, []payment.PaymentStatus{payment.StatusPending, final})
+	if scenario.Delay <= 0 {
+		p, err := s.service.CreateAndAdvance(req, []payment.PaymentStatus{payment.StatusPending, final})
+		if err != nil {
+			return payment.PaymentResult{}, fmt.Errorf("simulator: initiating payment: %w", err)
+		}
+		return payment.PaymentResult{Payment: p}, nil
+	}
+
+	p, err := s.service.CreateAndAdvance(req, []payment.PaymentStatus{payment.StatusPending})
 	if err != nil {
 		return payment.PaymentResult{}, fmt.Errorf("simulator: initiating payment: %w", err)
 	}
+	if p.Status != payment.StatusPending {
+		// Idempotent replay of a payment already resolved beyond PENDING — return it as-is
+		// rather than re-driving the state machine or waiting out the delay again.
+		return payment.PaymentResult{Payment: p}, nil
+	}
+
+	s.sleep(scenario.Delay)
+
+	// A separate variable, not "p, err =": on error ApplyTransition returns a zero Payment{},
+	// which would otherwise clobber p.ID right before the fallback Get(p.ID) below needs it.
+	updated, err := s.service.ApplyTransition(p.ID, final)
+	if err != nil {
+		var transitionErr *payment.TransitionError
+		if errors.As(err, &transitionErr) {
+			current, getErr := s.service.Get(p.ID)
+			if getErr != nil {
+				return payment.PaymentResult{}, fmt.Errorf("simulator: fetching payment after superseded outcome: %w", getErr)
+			}
+			return payment.PaymentResult{Payment: current}, nil
+		}
+		return payment.PaymentResult{}, fmt.Errorf("simulator: applying %s: %w", final, err)
+	}
+	p = updated
 
 	return payment.PaymentResult{Payment: p}, nil
 }

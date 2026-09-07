@@ -31,6 +31,15 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   `Initiate` calls for the same brand-new `IdempotencyKey` can't interleave mid-sequence. A
   request with an unknown scenario or the wrong `Provider.ID` is rejected before any `Payment`
   is created.
+- The `timeout` scenario drives `CREATED → PENDING`, waits out `Scenario.Delay` (a
+  `Sleeper`, default `time.Sleep`, injectable so tests don't wait for real delays — see
+  `WithSleeper`), then applies `EXPIRED` — but only if nothing else resolved the payment in the
+  meantime. Holding `CreateAndAdvance`'s lock for the entire delay would serialize every other
+  concurrent call, so the delayed path submits to `PENDING` and applies the final status as two
+  separate steps; if a real callback (`HandleCallback`) resolves the payment differently while
+  `Initiate` is waiting, that resolution wins — the resulting `*payment.TransitionError` is
+  treated as "already resolved," not as `Initiate` failing (covered by a test that injects a
+  competing callback from inside the `Sleeper`).
 - `internal/simulator/callback.go` — `specs/providers/adapter-contract.md`'s `parseCallback`
   and `verifyCallback` capabilities: `Callback`, `ParseCallback`, and a `CallbackVerifier` doing
   HMAC-SHA256 over the raw callback body (a simulator-specific signing scheme for exercising
@@ -79,11 +88,15 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   curl -X POST localhost:8080/simulator/callbacks -H "X-Signature: $SIG" -d "$BODY"
   ```
 
-Not yet implemented: `TIMEOUT` (needs real delay machinery) and wiring the `DUPLICATE_CALLBACK`/
-`OUT_OF_ORDER`/`INVALID_SIGNATURE` behaviors into `Initiate`'s scenario selection (`Initiate`
-itself is still synchronous end-to-end for `success`/`failure`; the callback endpoint above
-exercises the same three behaviors independently, against a payment already at `PENDING`). See
-[ROADMAP.md](../../ROADMAP.md) Phase 1.
+All six `specs/scenarios/scenario-format.md` outcomes now have real behavior — `success`,
+`failure`, and `timeout` through `Initiate`'s scenario selection, and
+`duplicate_callback`/`out_of_order`/`invalid_signature` through `HandleCallback` directly (not
+wired into `Initiate`'s scenario selection — they're about how a *second*, later event is
+handled against an already-`PENDING` payment, not an outcome `Initiate` itself resolves to). See
+[ROADMAP.md](../../ROADMAP.md) Phase 1 for what's still open in this area — most notably,
+whether `Initiate` should become callback-driven for `success`/`failure` too, matching how a
+real async provider behaves; that's still an open design question, not settled by any of this.
+
 `Service`'s errors (`ErrMissingIdempotencyKey`, `ErrPaymentNotFound`, `TransitionError`) and
 `simulator`'s (`ErrWrongProvider`, `ErrUnknownScenario`, `ErrInvalidCallbackSignature`) are
 provisional and package-local, not the canonical error taxonomy — see

@@ -1,6 +1,15 @@
 package simulator
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+// defaultTimeoutDelay is DefaultRegistry's simulated delay before a "timeout" scenario expires.
+// It's short enough not to make a demo/test annoying to wait through — the point is exercising
+// the CREATED -> PENDING -> EXPIRED path and the possibility of a real callback racing it, not
+// modeling a realistic real-world provider timeout window.
+const defaultTimeoutDelay = 2 * time.Second
 
 // DefaultScenarioName is used when a PaymentRequest targeting SIMULATOR carries no
 // providerOptions.simulator.scenario, per specs/scenarios/scenario-format.md "Rules Specific to
@@ -22,14 +31,17 @@ func (e *ErrUnknownScenario) Error() string {
 	return fmt.Sprintf("simulator: unknown scenario %q", e.Name)
 }
 
-// DefaultRegistry returns the scenarios this package actually implements. TIMEOUT,
-// DUPLICATE_CALLBACK, OUT_OF_ORDER, and INVALID_SIGNATURE from
-// specs/scenarios/scenario-format.md are intentionally absent — they need delay/callback-timing
-// machinery this increment doesn't build yet (see implementations/reference/README.md).
+// DefaultRegistry returns the scenarios reachable through Simulator.Initiate's scenario
+// selection. DUPLICATE_CALLBACK, OUT_OF_ORDER, and INVALID_SIGNATURE from
+// specs/scenarios/scenario-format.md are intentionally absent — those are exercised through
+// Simulator.HandleCallback directly instead (see implementations/reference/README.md), since
+// they're about how a *second*, later event is handled, not an outcome Initiate itself resolves
+// to.
 func DefaultRegistry() Registry {
 	return Registry{
 		"success": {Name: "success", Outcome: OutcomeSuccess},
 		"failure": {Name: "failure", Outcome: OutcomeFailure},
+		"timeout": {Name: "timeout", Outcome: OutcomeTimeout, Delay: defaultTimeoutDelay},
 	}
 }
 
