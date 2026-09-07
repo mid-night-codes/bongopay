@@ -20,7 +20,7 @@ Contracts (initial placeholders)
 `make setup && make validate && make test`, and understand what to do next without asking a
 maintainer a clarifying question that documentation should have answered.
 
-## Phase 1 — Simulator Core (current)
+## Phase 1 — Simulator Core (complete)
 
 ```text
 Payment lifecycle (implemented against the canonical state machine)
@@ -30,7 +30,23 @@ Deterministic test scenarios
 REST contract (first working implementation)
 ```
 
-## Phase 2 — Developer Tooling
+**Exit criteria:** every item above has a working Go implementation in
+[implementations/reference/](implementations/reference/README.md), covered by tests
+(including `-race` concurrency tests where relevant), matching a written spec — see
+[ADR 0002](adr/0002-reference-implementation-language-go.md) for the language choice and
+[specs/scenarios/scenario-format.md](specs/scenarios/scenario-format.md) for the six scenario
+outcomes, all of which now have real behavior: `success`/`failure`/`timeout` through
+`Simulator.Initiate`, and `duplicate_callback`/`out_of_order`/`invalid_signature` through
+`Simulator.HandleCallback` (exposed over HTTP as `POST /simulator/callbacks`).
+
+**Left open, not blocking exit:** whether `Simulator.Initiate` should become callback-driven for
+`success`/`failure` too — i.e. always submit to `PENDING` and require a separate callback to
+resolve the outcome, matching how a real async provider behaves — instead of today's synchronous
+one-call convenience. This is a real behavior change for existing callers (including the REST
+contract's demo UX), not an additive increment, so it's recorded here as an open question for a
+future ADR rather than decided as a side effect of closing this phase.
+
+## Phase 2 — Developer Tooling (current)
 
 ```text
 Docker image

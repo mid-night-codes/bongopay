@@ -183,5 +183,19 @@ README.
   `TODO` the moment any `*_test.*` file existed anywhere in those directories — the placeholder
   it replaces was written before there was real code to hit that branch.
 
+This closes Phase 1 ("Simulator Core") per [ROADMAP.md](ROADMAP.md): every item in its checklist
+now has a working, tested Go implementation, and all six `specs/scenarios/scenario-format.md`
+outcomes have real behavior. `ROADMAP.md` and the root `README.md` updated to reflect this and
+that Phase 2 ("Developer Tooling") is now current; the root README's "Example API" section also
+had its `provider` field shape corrected (`{"id": "..."}`, not a bare string) to actually match
+`specs/payments/payment-contract.md` and `internal/payment/types.go` — a Phase-0-era doc bug
+that predates the reference implementation, only actually noticeable once something real existed
+to compare it against.
+
+Left open, recorded rather than silently dropped: whether `Simulator.Initiate` should become
+callback-driven for `success`/`failure` too instead of resolving synchronously in one call —
+a real behavior change, not an additive increment, so it's flagged in `ROADMAP.md` as a
+candidate for an ADR rather than decided here.
+
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
