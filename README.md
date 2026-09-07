@@ -29,20 +29,31 @@ callbacks, chaos scenarios — without touching a real provider or moving real m
 
 ## Current Project Status
 
-**Early-stage / Phase 0 — Foundation complete, Phase 1 ("Simulator Core") starting.** See
-[ROADMAP.md](ROADMAP.md). This repository currently establishes:
+**Early-stage / Phase 0 ("Foundation") and Phase 1 ("Simulator Core") complete, Phase 2
+("Developer Tooling") starting.** See [ROADMAP.md](ROADMAP.md). This repository currently
+establishes:
 
 - Repository structure, governance, and contribution workflow
 - Specification-first architecture (specs → contracts → conformance → implementations)
-- Placeholder specifications for the payment contract, state machine, provider adapter
-  model, scenario format, error model, and event model
-- CI scaffolding and an AI-agent-friendly contribution environment
+- Specifications for the payment contract, state machine, provider adapter model, and scenario
+  format; the canonical error model and event model are still placeholders (see
+  [specs/errors/](specs/errors/README.md), [specs/events/](specs/events/README.md))
+- A working Go reference implementation
+  ([implementations/reference/](implementations/reference/README.md)) — payment lifecycle,
+  the `SIMULATOR` provider (all six scenario outcomes), webhook/callback verification, and a
+  REST API you can actually run and `curl`
+- CI scaffolding (fast validation, Go build/test, maintainer-approval gating for
+  non-contributor PRs, Conventional Commits enforcement) and an AI-agent-friendly contribution
+  environment
 
 **BongoPay does not yet:**
 
 - Process real payments or move real money
-- Integrate with any real payment provider
-- Ship a production-ready reference implementation, SDK, or CLI
+- Integrate with any real payment provider (`adapters/` is still empty — only the `SIMULATOR`
+  is implemented)
+- Ship a production-ready reference implementation, SDK, or CLI (the reference implementation
+  is in-memory only, with no authentication — see
+  [implementations/reference/README.md](implementations/reference/README.md))
 - Guarantee stability of any contract (everything is pre-1.0 and may change; changes are
   tracked via [ADRs](adr/) and [RFCs](rfcs/))
 
@@ -81,28 +92,41 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture, boundaries, an
 
 ## Quick Start
 
-> The reference implementation does not exist yet (Phase 1). Today, "running BongoPay" means
-> validating specifications and contracts.
+Validate specs and contracts (no heavy language toolchain required for this part):
 
 ```bash
 git clone <repository-url>
 cd bongopay
 
-make setup      # install local validation tooling (no heavy language toolchains required)
+make setup      # install local validation tooling
 make validate   # validate specs, schemas, and contracts
-make test       # run conformance and unit tests (as they come online)
+make test       # run conformance/unit tests, including the Go reference implementation's
+```
+
+Run the actual reference implementation (requires Go — see
+[implementations/reference/README.md](implementations/reference/README.md)):
+
+```bash
+cd implementations/reference
+go run ./cmd/server &
+curl -X POST localhost:8080/payments \
+  -d '{"provider":{"id":"SIMULATOR"},"amount":{"value":5000,"currency":{"code":"TZS"}},"customerReference":{},"idempotencyKey":"demo-1"}'
 ```
 
 See [docs/development/](docs/development/README.md) for the full local development guide.
 
-## Example API (Illustrative — Not Yet Implemented)
+## Example API
 
-The shape below illustrates the target payment contract. It is **not** a working API yet —
-see [specs/payments/](specs/payments/README.md) for the authoritative, evolving specification.
+The shape below is real and runnable today against the `SIMULATOR` provider — see
+[implementations/reference/README.md](implementations/reference/README.md) for how to start the
+server and `curl` it. Real providers like `MPESA` are still illustrative only: `adapters/` is
+empty, so a request naming one is accepted by the contract's shape but has nothing to actually
+process it yet. See [specs/payments/](specs/payments/README.md) for the authoritative,
+evolving specification this shape derives from.
 
 ```json
 {
-  "provider": "MPESA",
+  "provider": { "id": "MPESA" },
   "amount": {
     "value": 50000,
     "currency": "TZS"
