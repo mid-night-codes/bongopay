@@ -197,5 +197,15 @@ callback-driven for `success`/`failure` too instead of resolving synchronously i
 a real behavior change, not an additive increment, so it's flagged in `ROADMAP.md` as a
 candidate for an ADR rather than decided here.
 
+### Added (Phase 2)
+
+- `deploy/docker/reference.Dockerfile`: a multi-stage build (`golang:1.27-alpine` builder,
+  `alpine:3` runtime, non-root user) for `implementations/reference/cmd/server` — no `go.sum`
+  to copy separately, since the reference implementation has zero external dependencies by
+  design. `deploy/compose/reference.yml` runs it with a fixed, obviously-fake callback-signing
+  secret for local-dev reproducibility. Both actually built and ran locally (`docker build`,
+  `docker run`, `docker compose up`, each `curl`-verified against the running container) before
+  being documented, not just written and assumed correct.
+
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
