@@ -206,6 +206,22 @@ candidate for an ADR rather than decided here.
   secret for local-dev reproducibility. Both actually built and ran locally (`docker build`,
   `docker run`, `docker compose up`, each `curl`-verified against the running container) before
   being documented, not just written and assumed correct.
+- `implementations/reference/cmd/cli`: an `initiate`/`get` command-line client for
+  `cmd/server`, pure stdlib (`flag` + `net/http`, no CLI framework dependency).
+
+### Fixed (Phase 2)
+
+- `cmd/cli get`'s `--server` flag was silently ignored when passed after the positional `ID`
+  (`get ID --server URL`) — Go's `flag` package stops parsing at the first non-flag argument, so
+  everything after `ID` was treated as extra positional args and `--server` never took effect,
+  falling back to the default `localhost:8080` instead. Caught by manually running the built
+  CLI against a real server on a non-default port rather than trusting that it compiled and the
+  logic looked right: the request went to the wrong port entirely and, in this sandbox
+  specifically, port 8080 happens to be intercepted by an internal gateway, so the failure
+  surfaced as a confusing `"No gateway route found"` response with no obvious connection to an
+  argument-ordering bug — a `curl` to the exact same URL the CLI *should* have hit succeeded
+  immediately, which is what isolated it. Fixed by documenting and requiring the correct order
+  (`get --server URL ID`) rather than the parser's default behavior.
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
