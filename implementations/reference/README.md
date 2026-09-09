@@ -108,6 +108,10 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   go run ./cmd/cli get <id-from-above>
   ```
 
+- [sdks/go/](../../sdks/go/README.md) — a Go client for this same server, for calling it from
+  Go code instead of `curl`/the CLI. Its `client_test.go` builds and runs this very server as
+  part of its test suite.
+
 All six `specs/scenarios/scenario-format.md` outcomes now have real behavior — `success`,
 `failure`, and `timeout` through `Initiate`'s scenario selection, and
 `duplicate_callback`/`out_of_order`/`invalid_signature` through `HandleCallback` directly (not

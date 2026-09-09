@@ -10,7 +10,7 @@ while IFS= read -r -d '' file; do
     echo "  [FAIL] $file: has a 'DO NOT EDIT MANUALLY' header but no 'Generated from:' source reference"
     fail=1
   fi
-done < <(find . -type f \( -name '*.md' -o -name '*.json' -o -name '*.yaml' -o -name '*.yml' \) \
+done < <(find . -type f \( -name '*.md' -o -name '*.json' -o -name '*.yaml' -o -name '*.yml' -o -name '*.go' \) \
   -not -path './node_modules/*' -not -path './.git/*' -print0)
 
 if [ "$fail" -ne 0 ]; then
@@ -19,4 +19,5 @@ if [ "$fail" -ne 0 ]; then
 fi
 
 echo "No generated-file policy violations found."
-echo "(No generation pipeline is wired up yet — see AGENTS.md #12 and ROADMAP.md Phase 2.)"
+echo "(sdks/go/generated/client.gen.go, from contracts/openapi/bongopay.yaml via 'make generate',"
+echo "is the first real entry in this policy — see AGENTS.md #12.)"

@@ -95,20 +95,26 @@ jobs:
         run: make docs
 
   go:
-    name: Go build, vet, test, fmt (implementations/reference)
+    name: Go build, vet, test, fmt (${{ matrix.module }})
     needs: [authorize, await-maintainer-approval]
     if: ${{ always() && (needs.authorize.outputs.trusted == 'true' || needs.await-maintainer-approval.result == 'success') }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Every Go module in the repo — add a new one here when it gets its own go.mod (see
+        # scripts/test.sh, which discovers these generically for `make test`; this job's
+        # build/vet/gofmt checks aren't generic yet, so the list is explicit).
+        module: [implementations/reference, sdks/go]
     defaults:
       run:
-        working-directory: implementations/reference
+        working-directory: ${{ matrix.module }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: implementations/reference/go.mod
+          go-version-file: ${{ matrix.module }}/go.mod
 
       - name: go build
         run: go build ./...
