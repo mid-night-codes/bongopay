@@ -7,16 +7,17 @@ context chain beyond this README: it's operational configuration, not architectu
 
 ## Status
 
-**Empty — Phase 2 ("Developer Tooling"), following
-[implementations/reference/](../implementations/README.md).** See [ROADMAP.md](../ROADMAP.md).
-There is nothing to containerize yet.
+**In progress — Phase 2 ("Developer Tooling").** See [ROADMAP.md](../ROADMAP.md). A Docker
+image and Compose file exist for
+[implementations/reference/](../implementations/README.md) — see [docker/](docker/) and
+[compose/](compose/).
 
 ## Layout
 
 | Directory | Covers |
 |---|---|
-| [docker/](docker/) | Dockerfile(s) for local components (simulator, reference implementation) once they exist |
-| [compose/](compose/) | Docker Compose files to run those components together locally |
+| [docker/](docker/) | `reference.Dockerfile`, building `implementations/reference/cmd/server` |
+| [compose/](compose/) | `reference.yml`, running that image locally |
 
 ## Rules for Working in `deploy/`
 

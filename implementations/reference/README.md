@@ -88,6 +88,14 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   curl -X POST localhost:8080/simulator/callbacks -H "X-Signature: $SIG" -d "$BODY"
   ```
 
+  Or run it in Docker instead of `go run` — see
+  [deploy/docker/](../../deploy/docker/README.md) and
+  [deploy/compose/](../../deploy/compose/README.md):
+
+  ```bash
+  docker compose -f ../../deploy/compose/reference.yml up --build
+  ```
+
 All six `specs/scenarios/scenario-format.md` outcomes now have real behavior — `success`,
 `failure`, and `timeout` through `Initiate`'s scenario selection, and
 `duplicate_callback`/`out_of_order`/`invalid_signature` through `HandleCallback` directly (not

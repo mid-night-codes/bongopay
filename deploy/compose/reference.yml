@@ -1,0 +1,21 @@
+# Runs the reference implementation locally. See deploy/README.md — local development only.
+#
+# From the repo root:
+#   docker compose -f deploy/compose/reference.yml up --build
+#
+# Then, e.g.:
+#   curl -X POST localhost:8080/payments \
+#     -d '{"provider":{"id":"SIMULATOR"},"amount":{"value":5000,"currency":{"code":"TZS"}},"customerReference":{},"idempotencyKey":"demo-1"}'
+
+services:
+  reference:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/reference.Dockerfile
+    image: bongopay-reference
+    ports:
+      - "8080:8080"
+    # An obviously-fake, fixed secret for local-dev convenience (so a curl'd callback signature
+    # is reproducible across restarts) — never a real credential, per AGENTS.md §10. cmd/server
+    # generates a random one and logs it if this is omitted.
+    command: ["-callback-secret=dev-only-fake-secret-do-not-use-in-real-deployments"]
