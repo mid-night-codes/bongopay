@@ -222,6 +222,11 @@ candidate for an ADR rather than decided here.
   argument-ordering bug — a `curl` to the exact same URL the CLI *should* have hit succeeded
   immediately, which is what isolated it. Fixed by documenting and requiring the correct order
   (`get --server URL ID`) rather than the parser's default behavior.
+- `.github/pull_request_template.md`'s vague "Summary" section replaced with explicit "Problem"
+  and "Solution" (step-by-step) sections; `.github/CONTRIBUTING_AGENT.md` and `CONTRIBUTING.md`
+  updated to require writing the PR body out in full and to stop using
+  `gh pr create --fill` (which only concatenates commit subject lines — documenting *what*
+  changed, not *why* or *how*).
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
