@@ -38,7 +38,10 @@ assumptions explicitly") and does not repeat rules already stated there.
 9. **Self-review your own diff** using the checklist below before writing the PR description.
 10. **Push the branch (never `main`) and write the PR description** using
     [.github/pull_request_template.md](pull_request_template.md), stating assumptions
-    explicitly, and linking the issue from step 2 (`Closes #N` or `Refs #N`).
+    explicitly, and linking the issue from step 2 (`Closes #N` or `Refs #N`). Write out the
+    **Problem** and **Solution** sections in full — see step 4 of
+    [Branching and Commit Workflow](#4-push-the-branch-and-open-a-pr) below for what that means
+    in practice.
 
 ## Branching and Commit Workflow
 
@@ -119,8 +122,29 @@ the exact form.
 
 ```bash
 git push -u origin <branch-name>
-gh pr create --fill
+gh pr create --title "..." --body "$(cat <<'EOF'
+## Problem
+
+...
+
+## Solution
+
+1. ...
+2. ...
+EOF
+)"
 ```
+
+**Do not use `gh pr create --fill`.** `--fill` copies commit subject lines into the body — that
+documents *what* changed, not *why* it was needed or *how* the change actually solves it. Write
+the `--body` out using [.github/pull_request_template.md](pull_request_template.md)'s
+structure, in full:
+
+- **Problem** — the gap, bug, or need, stated on its own terms (what couldn't be done before,
+  or what broke), not a restatement of the PR title. Link the issue from step 0.
+- **Solution** — a numbered walkthrough of how the change addresses it, not a file list. If you
+  tried and rejected another approach, say so — that's often more useful to a reviewer than the
+  approach you kept.
 
 Then link the issue from step 0 in the PR body if it isn't already covered by a commit footer
 GitHub picked up (`Closes #N` auto-closes it on merge; use `Refs #N` if the PR doesn't fully
@@ -156,8 +180,10 @@ branch name:
 
 ```bash
 git push -u origin <new-branch>
-gh pr create --fill --base <base-pr-branch> --head <new-branch>
+gh pr create --title "..." --body "..." --base <base-pr-branch> --head <new-branch>
 ```
+
+Same rule as step 4 above: write the `--body` out with a real Problem/Solution — don't `--fill`.
 
 The `--base` is what makes it a stacked PR on GitHub — the diff shown is only *your* commits on
 top of the base branch, not the base branch's changes too.
@@ -181,6 +207,8 @@ Before opening a PR, confirm each of these — don't just assume they hold:
 
 - [ ] An open issue exists for this work and is referenced (`Refs #N`/`Closes #N`) in a commit
       or the PR body — created before the first commit, not added after the fact.
+- [ ] The PR body has a real Problem section and a step-by-step Solution — not
+      `gh pr create --fill`'s commit-subject-line dump.
 - [ ] Work happened on a branch cut from the current tip of `main`, not on `main` itself — or,
       if genuinely [stacked](#stacked-prs), the PR's `--base` matches the real dependency and
       that dependency is stated in the PR description.
