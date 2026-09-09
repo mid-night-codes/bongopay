@@ -227,6 +227,19 @@ candidate for an ADR rather than decided here.
   updated to require writing the PR body out in full and to stop using
   `gh pr create --fill` (which only concatenates commit subject lines — documenting *what*
   changed, not *why* or *how*).
+- `sdks/go/`: the first real entry in `AGENTS.md §12`'s Generated Files table.
+  `generated/client.gen.go` (types only) is generated from `contracts/openapi/bongopay.yaml` via
+  `oapi-codegen`, wired into `scripts/generate.sh` (`make generate` was a no-op since Phase 0).
+  `client.go` is a thin, hand-written HTTP client on top of those types — deliberately not also
+  generated, since `oapi-codegen`'s client generator would pull in
+  `github.com/oapi-codegen/runtime` solely to encode one plain-string path parameter, which
+  `net/url.PathEscape` already does for free. Verified against a real, freshly-built
+  `cmd/server` binary in `client_test.go` (`exec.Command`, not a mock), now picked up
+  automatically by both `make test` (already generic over `go.mod` files) and a newly
+  matrixed `go` CI job (previously hardcoded to `implementations/reference` only).
+- `scripts/check-contracts.sh` now actually scans `*.go` files too — it previously only checked
+  `*.md`/`*.json`/`*.yaml`/`*.yml`, so it would have reported "no violations" vacuously against
+  `sdks/go/generated/client.gen.go` without this fix.
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
