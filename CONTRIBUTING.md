@@ -49,8 +49,10 @@ Merge
 4. **Implement the smallest reasonable change.** See "Keep Pull Requests Small" below.
 5. **Run validation locally**: `make validate`, `make lint`, `make test` (and
    `make test-conformance` if you touched a spec, contract, or adapter).
-6. **Open a pull request** using the template — it will be pre-filled from
-   [.github/pull_request_template.md](.github/pull_request_template.md).
+6. **Open a pull request** using the template
+   ([.github/pull_request_template.md](.github/pull_request_template.md)). Fill in its Problem
+   and Solution sections for real — what gap or bug this closes, and a step-by-step account of
+   how the change addresses it — not a one-line restatement of the title.
 7. **Automated checks** run in CI (see [docs/development/ci.md](docs/development/ci.md)).
 8. **Maintainer review** — see [GOVERNANCE.md](GOVERNANCE.md) for review expectations.
 9. **Merge**, typically squash-merged with a Conventional Commit message.
