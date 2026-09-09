@@ -6,10 +6,10 @@ runs to see the contract working, rather than reading specs in the abstract.
 
 ## Status
 
-**Not started — Phase 2 ("Developer Tooling"),** and dependent on
-[implementations/reference/](../implementations/README.md) and
-[sdks/](../sdks/README.md) existing first. See [ROADMAP.md](../ROADMAP.md). No examples exist
-yet.
+**[go-quickstart/](go-quickstart/README.md) exists — Phase 2 ("Developer Tooling").** See
+[ROADMAP.md](../ROADMAP.md). It demonstrates initiate + get against the `SIMULATOR` via
+[sdks/go](../sdks/README.md) — see its own README for what it deliberately doesn't demonstrate
+yet (a payment + webhook flow) and why.
 
 ## Rules for Working in `examples/`
 
