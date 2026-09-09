@@ -22,7 +22,8 @@ comments rather than waiting for them. `bongopay.yaml` does the same — its `Pa
 enum and `CustomerReference` schema carry the identical `TODO(spec)` notes forward rather than
 guessing an answer.
 
-No HTTP server implements this contract yet — that's a separate, larger follow-up. No
+[implementations/reference/cmd/server](../../implementations/reference/README.md) implements
+this contract, and [sdks/go/](../../sdks/go/README.md) is a generated-types Go client for it. No
 simulator-specific callback-delivery endpoint is in this document either: each real provider has
 its own webhook payload shape (see
 [specs/providers/adapter-contract.md](../../specs/providers/adapter-contract.md)'s

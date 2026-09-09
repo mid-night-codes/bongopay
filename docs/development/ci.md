@@ -20,8 +20,9 @@ make docs      # internal markdown link resolution
 Per [AGENTS.md §5](../../AGENTS.md#5-commands-you-should-avoid), none of these may be bypassed
 (`--no-verify`, skipping `make validate`) to force a PR through.
 
-A separate `go` job runs `go build`, `go vet`, `go test`, and a `gofmt` check against
-[implementations/reference/](../../implementations/reference/README.md) — see
+A separate `go` job, matrixed over every Go module in the repo
+(`implementations/reference/`, [sdks/go/](../../sdks/go/README.md)), runs `go build`, `go vet`,
+`go test`, and a `gofmt` check for each — see
 [ADR 0002](../../adr/0002-reference-implementation-language-go.md) for why Go. It is gated by
 the same `authorize`/`await-maintainer-approval` jobs as `validate`, since it also executes code
 from the PR branch. `go test` also runs as part of `make test` above (see

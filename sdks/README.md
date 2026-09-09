@@ -10,17 +10,19 @@ specs/  → contracts/  → conformance/  → implementations/ (+ adapters/, sdk
 
 ## Status
 
-**Not started — Phase 2 ("Developer Tooling").** See [ROADMAP.md](../ROADMAP.md),
-`TODO(RFC): SDK generation pipeline and target languages for v1` in
+**`go/` exists — Phase 2 ("Developer Tooling").** See [ROADMAP.md](../ROADMAP.md) and
+[go/README.md](go/README.md). Other languages remain
+`TODO(RFC): SDK generation pipeline and target languages` — see
 [ARCHITECTURE.md §14](../ARCHITECTURE.md#14-what-this-document-does-not-decide) and
-[AGENTS.md §12](../AGENTS.md#12-generated-files). No SDK, generated or hand-written, exists yet.
+[AGENTS.md §12](../AGENTS.md#12-generated-files).
 
 ## Rules for Working in `sdks/`
 
-1. **Prefer generated over hand-written.** Once a generation pipeline exists (Phase 2), an SDK
-   under here derived from `contracts/` should be treated as generated output — see
-   [AGENTS.md §11](../AGENTS.md#11-identifying-generated-files) — and edited at its source, not
-   by hand.
+1. **Prefer generated over hand-written where practical.** `go/`'s types are generated from
+   `contracts/openapi/bongopay.yaml`; its thin HTTP client is deliberately hand-written instead
+   — see [go/README.md](go/README.md) for why generating it wasn't practical here. That
+   document is the precedent for judging future SDKs' own generated-vs-hand-written split, not
+   a rule that everything must be generated regardless of cost.
 2. **No business logic.** SDKs must not encode business logic or provider-specific behavior
    beyond what the canonical contract and provider capability discovery already expose (see
    [ARCHITECTURE.md §7](../ARCHITECTURE.md#7-sdk-boundary)).
