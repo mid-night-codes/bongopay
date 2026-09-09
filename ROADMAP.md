@@ -46,7 +46,7 @@ one-call convenience. This is a real behavior change for existing callers (inclu
 contract's demo UX), not an additive increment, so it's recorded here as an open question for a
 future ADR rather than decided as a side effect of closing this phase.
 
-## Phase 2 — Developer Tooling (current)
+## Phase 2 — Developer Tooling (complete)
 
 ```text
 Docker image
@@ -56,7 +56,25 @@ SDK generation
 Example applications
 ```
 
-## Phase 3 — Provider Ecosystem
+**Exit criteria:** every item above is real and runnable, not just documented —
+[deploy/docker/reference.Dockerfile](deploy/docker/reference.Dockerfile) +
+[deploy/compose/reference.yml](deploy/compose/reference.yml) for the Docker image;
+[implementations/reference/cmd/cli](implementations/reference/README.md) for the CLI;
+[sdks/go/](sdks/README.md) (types generated from
+[contracts/openapi/bongopay.yaml](contracts/openapi/bongopay.yaml), a thin hand-written client
+on top) for SDK generation; [sdks/go/testcontainer/](sdks/go/testcontainer/README.md) for
+Testcontainers support; and [examples/go-quickstart/](examples/go-quickstart/README.md) for
+example applications. Each was manually verified against something real — a running server, a
+running container — before being documented, not written and assumed correct; two of those
+verification passes caught genuine bugs along the way (a `cmd/cli` flag-ordering bug, and a
+container-readiness race in the Testcontainers helper), both recorded in `CHANGELOG.md`.
+
+**Left open, not blocking exit:** `examples/go-quickstart` deliberately doesn't demonstrate a
+"payment + webhook" flow, since that would mean faking a gap that doesn't exist in the current
+synchronous `Initiate` — see Phase 1's own open question above. A real webhook example belongs
+here once that's resolved.
+
+## Phase 3 — Provider Ecosystem (current)
 
 ```text
 Provider contract (stabilized)

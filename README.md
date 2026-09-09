@@ -29,9 +29,9 @@ callbacks, chaos scenarios — without touching a real provider or moving real m
 
 ## Current Project Status
 
-**Early-stage / Phase 0 ("Foundation") and Phase 1 ("Simulator Core") complete, Phase 2
-("Developer Tooling") starting.** See [ROADMAP.md](ROADMAP.md). This repository currently
-establishes:
+**Early-stage / Phase 0 ("Foundation"), Phase 1 ("Simulator Core"), and Phase 2 ("Developer
+Tooling") complete, Phase 3 ("Provider Ecosystem") starting.** See [ROADMAP.md](ROADMAP.md).
+This repository currently establishes:
 
 - Repository structure, governance, and contribution workflow
 - Specification-first architecture (specs → contracts → conformance → implementations)
@@ -42,9 +42,14 @@ establishes:
   ([implementations/reference/](implementations/reference/README.md)) — payment lifecycle,
   the `SIMULATOR` provider (all six scenario outcomes), webhook/callback verification, and a
   REST API you can actually run and `curl`
-- CI scaffolding (fast validation, Go build/test, maintainer-approval gating for
-  non-contributor PRs, Conventional Commits enforcement) and an AI-agent-friendly contribution
-  environment
+- Developer tooling around that implementation: a Docker image and Compose file
+  ([deploy/](deploy/README.md)), a CLI, a generated-types Go SDK
+  ([sdks/go/](sdks/go/README.md)) with a Testcontainers helper for it
+  ([sdks/go/testcontainer/](sdks/go/testcontainer/README.md)), and a runnable example
+  ([examples/go-quickstart/](examples/go-quickstart/README.md))
+- CI scaffolding (fast validation, Go build/test across every Go module, maintainer-approval
+  gating for non-contributor PRs, Conventional Commits enforcement) and an AI-agent-friendly
+  contribution environment
 
 **BongoPay does not yet:**
 

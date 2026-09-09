@@ -22,7 +22,8 @@ Per [AGENTS.md §5](../../AGENTS.md#5-commands-you-should-avoid), none of these 
 
 A separate `go` job, matrixed over every Go module in the repo
 (`implementations/reference/`, [sdks/go/](../../sdks/go/README.md),
-[examples/go-quickstart/](../../examples/go-quickstart/README.md)), runs `go build`, `go vet`,
+[examples/go-quickstart/](../../examples/go-quickstart/README.md),
+[sdks/go/testcontainer/](../../sdks/go/testcontainer/README.md)), runs `go build`, `go vet`,
 `go test`, and a `gofmt` check for each — see
 [ADR 0002](../../adr/0002-reference-implementation-language-go.md) for why Go. It is gated by
 the same `authorize`/`await-maintainer-approval` jobs as `validate`, since it also executes code
