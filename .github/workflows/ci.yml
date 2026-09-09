@@ -104,7 +104,7 @@ jobs:
         # Every Go module in the repo — add a new one here when it gets its own go.mod (see
         # scripts/test.sh, which discovers these generically for `make test`; this job's
         # build/vet/gofmt checks aren't generic yet, so the list is explicit).
-        module: [implementations/reference, sdks/go]
+        module: [implementations/reference, sdks/go, examples/go-quickstart]
     defaults:
       run:
         working-directory: ${{ matrix.module }}
