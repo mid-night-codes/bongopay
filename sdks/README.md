@@ -11,7 +11,9 @@ specs/  → contracts/  → conformance/  → implementations/ (+ adapters/, sdk
 ## Status
 
 **`go/` exists — Phase 2 ("Developer Tooling").** See [ROADMAP.md](../ROADMAP.md) and
-[go/README.md](go/README.md). Other languages remain
+[go/README.md](go/README.md), including
+[go/testcontainer/](go/testcontainer/README.md) — a Docker-based test helper kept in its own
+nested module so the plain client stays dependency-free. Other languages remain
 `TODO(RFC): SDK generation pipeline and target languages` — see
 [ARCHITECTURE.md §14](../ARCHITECTURE.md#14-what-this-document-does-not-decide) and
 [AGENTS.md §12](../AGENTS.md#12-generated-files).

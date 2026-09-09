@@ -13,6 +13,12 @@ node_modules/
 # instead, per AGENTS.md's tool-agnostic framing (this repo isn't Claude-Code-specific).
 .claude/
 
-# Go build artifacts (see implementations/reference/)
+# Go build artifacts (see implementations/reference/). `go build ./...` run from a `main`
+# package's own directory (instead of always passing -o) writes a binary named after that
+# directory right into it — caught happening for real with examples/go-quickstart while
+# verifying sdks/go/testcontainer.
 implementations/reference/bin/
+implementations/reference/server
+implementations/reference/cli
+examples/go-quickstart/go-quickstart
 *.test
