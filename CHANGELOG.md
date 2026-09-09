@@ -240,6 +240,12 @@ candidate for an ADR rather than decided here.
 - `scripts/check-contracts.sh` now actually scans `*.go` files too — it previously only checked
   `*.md`/`*.json`/`*.yaml`/`*.yml`, so it would have reported "no violations" vacuously against
   `sdks/go/generated/client.gen.go` without this fix.
+- `examples/go-quickstart/`: initiate (success and failure scenarios), read back by ID, and
+  idempotent-replay, using `sdks/go` against a real running `cmd/server` — the flow actually
+  supported end-to-end today. Deliberately does not attempt a "payment + webhook" example (the
+  shape `examples/README.md` itself suggests as a model), since that would mean faking a gap
+  that doesn't exist in the current synchronous `Initiate` — see the still-open design question
+  in `ROADMAP.md`. Added to the `go` CI matrix alongside `implementations/reference`/`sdks/go`.
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
