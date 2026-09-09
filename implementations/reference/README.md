@@ -96,6 +96,18 @@ Demonstrates [specs/](../../specs/README.md) working end-to-end. See
   docker compose -f ../../deploy/compose/reference.yml up --build
   ```
 
+- `cmd/cli/` — a small `initiate`/`get` command-line client for the server above, for
+  exercising it without hand-writing `curl`/`jq`. **Flags must come before the positional `ID`
+  on `get`** — Go's `flag` package stops parsing at the first non-flag argument, so
+  `get ID --server URL` silently ignores `--server` and falls back to its default
+  (`localhost:8080`), which produced a very misleading error while this was being built (see
+  `CHANGELOG.md`). Correct order: `get --server URL ID`.
+
+  ```bash
+  go run ./cmd/cli initiate --currency TZS --amount 5000 --idempotency-key demo-1
+  go run ./cmd/cli get <id-from-above>
+  ```
+
 All six `specs/scenarios/scenario-format.md` outcomes now have real behavior — `success`,
 `failure`, and `timeout` through `Initiate`'s scenario selection, and
 `duplicate_callback`/`out_of_order`/`invalid_signature` through `HandleCallback` directly (not
