@@ -246,6 +246,27 @@ candidate for an ADR rather than decided here.
   shape `examples/README.md` itself suggests as a model), since that would mean faking a gap
   that doesn't exist in the current synchronous `Initiate` — see the still-open design question
   in `ROADMAP.md`. Added to the `go` CI matrix alongside `implementations/reference`/`sdks/go`.
+- `sdks/go/testcontainer/`: a `testcontainers-go`-based helper (`RunReference`) that builds and
+  starts `deploy/docker/reference.Dockerfile` as a real container for Go test suites — this
+  project's first external dependency, kept in its own nested Go module (own `go.mod`) so
+  `sdks/go`'s plain client stays dependency-free for anyone who only wants to make API calls.
+  `docs/development/dependency-policy.md`'s checklist answered in full in the PR description.
+- The first version of `sdks/go/testcontainer` waited on `cmd/server`'s startup log line
+  (`wait.ForLog(...)`) as its readiness signal and flaked with a connection `EOF` on the very
+  first real run against an actual container: the log line prints just before
+  `http.ListenAndServe` is called, and even once genuinely listening, Docker's own port-mapping
+  can lag slightly behind. Switched to `wait.ForListeningPort("8080/tcp")`, which checks the
+  actual host-mapped port a caller would connect to, and re-ran the test several times
+  (`go test -count=1`) before trusting it.
+- `.gitignore` was missing entries for binaries `go build ./...` writes into a `main` package's
+  own directory when run without `-o` — caught for real when `examples/go-quickstart/go-quickstart`
+  (a compiled binary) showed up as an untracked file while verifying this PR's own work.
+
+This closes Phase 2 ("Developer Tooling") per [ROADMAP.md](ROADMAP.md): every item in its
+checklist (Docker image, CLI, Testcontainers support, SDK generation, example applications) is
+real and manually verified against something actually running, not just documented.
+`ROADMAP.md` and the root `README.md` updated to reflect this and that Phase 3 ("Provider
+Ecosystem") is now current.
 
 Nothing has been released yet. This entry will move under a version heading (e.g. `[0.1.0]`)
 at the first tagged release, per [VERSIONING.md](VERSIONING.md).
