@@ -4,9 +4,25 @@ section genuinely doesn't apply, but don't delete a section instead of answering
 Human and AI-agent contributors: see CONTRIBUTING.md and AGENTS.md before opening this PR.
 -->
 
-## Summary
+## Problem
 
-What does this PR do, and why? Link the issue/RFC/ADR it addresses, if any.
+What need, gap, or bug does this PR address? Link the issue/RFC/ADR it addresses — every PR
+should trace to one (see
+[.github/CONTRIBUTING_AGENT.md#0-find-or-create-an-open-issue](CONTRIBUTING_AGENT.md#0-find-or-create-an-open-issue)).
+State it in terms of the problem, not the fix — "there was no way to X" or "Y broke when Z",
+not a restatement of the PR title.
+
+## Solution
+
+How this PR solves it, step by step — not just a restated file list. A reviewer should be able
+to follow the reasoning, not just the diff:
+
+1.
+2.
+3.
+
+If you considered and rejected another approach, say so briefly and why — that's often more
+useful to a reviewer than the approach you picked.
 
 ## Type of Change
 
